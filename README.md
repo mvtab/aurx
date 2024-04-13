@@ -1,5 +1,5 @@
 # aur-functions
-.bashrc functions for the Archlinux User Repository (AUR) packages.
+.bashrc functions for Archlinux User Repository (AUR) packages.
 
 # Usage
 ```bash
