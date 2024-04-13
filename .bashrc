@@ -26,11 +26,9 @@ aur-install() {
 	# Action.
 	pushd ${SRC_PATH} 1>/dev/null
 	git clone https://aur.archlinux.org/${1}.git
-	if [[ -z $(ls ${SRC_PATH}/${1} 2>/dev/null) ]]; then
-		local EXIT_STATUS=3
-	else
-		local EXIT_STATUS=0
-	fi
+	[[ -z $(ls ${SRC_PATH}/${1} 2>/dev/null) ]] \
+		&& local EXIT_STATUS=3 \
+		|| local EXIT_STATUS=0
 	popd 1>/dev/null
 	if [[ ${EXIT_STATUS} == 0 ]]; then
 		pushd ${SRC_PATH}/${1} 1>/dev/null
@@ -51,7 +49,7 @@ aur-install() {
 	else
 		echo "[-] Could not install ${1}. Exiting." >&2
 		rm -rf ${SRC_PATH}/${1}
-		return 5
+		return 4
 	fi
 }
 
@@ -59,13 +57,14 @@ aur-update() {
 	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
 	
 	# Sanity checks.
-	[[ ! -f ${SRC_PATH}/package_list ]] \
-		|| [[ -z "$(cat ${SRC_PATH}/package_list)" ]] \
-		&& echo "[-] Package list empty or not found. Exiting." >&2 \
-		&& return 1
-	[[ ! $(command -v aur-install) ]] \
-		&& echo "[-] Dependent function not found: aur-install. Exiting." >&2 \
-		&& return 2
+	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
+		echo "[-] Package list empty or not found. Exiting." >&2
+		return 1
+	fi
+	if [[ ! $(command -v aur-install) ]]; then
+		echo "[-] Dependent function not found: aur-install. Exiting." >&2
+		return 2
+	fi
 	for ITEM in $(cat ${SRC_PATH}/package_list); do
 		aur-install ${ITEM} || echo "[-] Could not install ${ITEM}. Skipping."
 	done
