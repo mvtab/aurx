@@ -1,6 +1,6 @@
 aur-install() {
 	# Local variables.
-	local SRC_PATH="${HOME}/.src"
+	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
 
 	# Sanity checks.
 	[[ ! $(command -v git) ]] \
@@ -56,10 +56,11 @@ aur-install() {
 }
 
 aur-update() {
-	local SRC_PATH="${HOME}/.src"
+	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
 	
 	# Sanity checks.
 	[[ ! -f ${SRC_PATH}/package_list ]] \
+		|| [[ -z "$(cat ${SRC_PATH}/package_list)" ]] \
 		&& echo "[-] Package list empty or not found. Exiting." >&2 \
 		&& return 1
 	[[ ! $(command -v aur-install) ]] \
