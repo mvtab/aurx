@@ -3,7 +3,7 @@
 
 # Usage
 ```bash
-cat .bashrc_functions >> ${HOME}/.bashrc
+cat bashrc_functions >> ${HOME}/.bashrc
 source ${HOME}/.bashrc
 aur-install <package>
 aur-update
