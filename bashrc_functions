@@ -1,0 +1,81 @@
+aur-install() {
+	# Work directory.
+	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
+
+	# Sanity checks.
+	if [[ ! $(command -v git) ]]; then
+		echo '[-] git not found. Exiting.' >&2
+		return 1
+	fi
+	if [[ ! $(command -v makepkg) ]]; then
+		echo '[-] makepkg not found. Exiting.' >&2
+		return 2
+	fi
+	local OLD_UMASK=$(umask)
+	umask 0077
+	if [[ ! -d ${SRC_PATH} ]]; then
+		echo "[!] ${SRC_PATH} not found. Creating." >&2
+		mkdir -p ${SRC_PATH}
+	fi
+	if [[ ! -f ${SRC_PATH}/package_list ]]; then
+		echo "[!] ${SRC_PATH}/package_list not found. Creating." >&2
+		touch ${SRC_PATH}/package_list
+	fi
+	if [[ -d ${SRC_PATH}/${1} ]]; then
+		echo "[!] ${SRC_PATH}/${1} already exists. Deleting." >&2
+		rm -rf ${SRC_PATH}/${1}
+	fi
+	umask ${OLD_UMASK}
+
+	# Execution.
+	pushd ${SRC_PATH} 1>/dev/null
+	git clone https://aur.archlinux.org/${1}.git
+	[[ -z $(ls ${SRC_PATH}/${1} 2>/dev/null) ]] \
+		&& local GIT_EXIT_STATUS=3 \
+		|| local GIT_EXIT_STATUS=0
+	popd 1>/dev/null
+	if [[ ${GIT_EXIT_STATUS} == 0 ]]; then
+		pushd ${SRC_PATH}/${1} 1>/dev/null
+		makepkg -sirc
+		local MAKEPKG_EXIT_STATUS=${?}
+		popd 1>/dev/null
+	else
+		echo "[-] Pulled an empty repository: ${1}. Exiting." >&2
+		rm -rf ${SRC_PATH}/${1}
+		return ${GIT_EXIT_STATUS}
+	fi
+	if [[ ${MAKEPKG_EXIT_STATUS} == 0 ]]; then
+		if [[ ! $(grep -e "${1}" ${SRC_PATH}/package_list) ]]; then
+			echo ${1} | tee -a ${SRC_PATH}/package_list 1>/dev/null
+		fi
+		rm -rf ${SRC_PATH}/${1}
+		return 0
+	else
+		echo "[-] Could not install ${1}. Exiting." >&2
+		rm -rf ${SRC_PATH}/${1}
+		return 4
+	fi
+}
+
+aur-update() {
+	# Work directory.
+	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
+	
+	# Sanity checks.
+	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
+		echo "[-] Package list empty or not found. Exiting." >&2
+		return 1
+	fi
+	if [[ ! $(command -v aur-install) ]]; then
+		echo "[-] Dependent function not found: aur-install. Exiting." >&2
+		return 2
+	fi
+	
+	# Execution.
+	for ITEM in $(cat ${SRC_PATH}/package_list); do
+		aur-install ${ITEM} || echo "[-] Could not install ${ITEM}. Skipping."
+	done
+	
+	return 0
+}
+
