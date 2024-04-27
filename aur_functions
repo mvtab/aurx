@@ -104,8 +104,6 @@ aur-remove() {
 	local NOT_FOUND_COUNT=0
 	local PACKAGE_COUNT=${#}
 	
-	echo ${REMOVE_DEPENDENCIES}
-
 	# Sanity checks.
 	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
 		echo "[-] Package list empty or not found. Exiting." >&2
