@@ -1,6 +1,8 @@
 aur-install() {
-	# Work directory.
 	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
+	local OLD_UMASK=$(umask)
+	local PACKAGE_COUNT=${#}
+	local ERROR_COUNT=0
 
 	# Sanity checks.
 	if [[ ! $(command -v git) ]]; then
@@ -11,7 +13,8 @@ aur-install() {
 		echo '[-] makepkg not found. Exiting.' >&2
 		return 2
 	fi
-	local OLD_UMASK=$(umask)
+
+	# Program checks.
 	umask 0077
 	if [[ ! -d ${SRC_PATH} ]]; then
 		echo "[!] ${SRC_PATH} not found. Creating." >&2
@@ -21,40 +24,84 @@ aur-install() {
 		echo "[!] ${SRC_PATH}/package_list not found. Creating." >&2
 		touch ${SRC_PATH}/package_list
 	fi
-	if [[ -d ${SRC_PATH}/${1} ]]; then
-		echo "[!] ${SRC_PATH}/${1} already exists. Deleting." >&2
-		rm -rf ${SRC_PATH}/${1}
-	fi
-	umask ${OLD_UMASK}
 
 	# Execution.
-	pushd ${SRC_PATH} 1>/dev/null
-	git clone https://aur.archlinux.org/${1}.git
-	[[ -z $(ls ${SRC_PATH}/${1} 2>/dev/null) ]] \
-		&& local GIT_EXIT_STATUS=3 \
-		|| local GIT_EXIT_STATUS=0
-	popd 1>/dev/null
-	if [[ ${GIT_EXIT_STATUS} == 0 ]]; then
-		pushd ${SRC_PATH}/${1} 1>/dev/null
-		makepkg -sirc
-		local MAKEPKG_EXIT_STATUS=${?}
-		popd 1>/dev/null
-	else
-		echo "[-] Pulled an empty repository: ${1}. Exiting." >&2
-		rm -rf ${SRC_PATH}/${1}
-		return ${GIT_EXIT_STATUS}
-	fi
-	if [[ ${MAKEPKG_EXIT_STATUS} == 0 ]]; then
-		if [[ ! $(grep -e "${1}" ${SRC_PATH}/package_list) ]]; then
-			echo ${1} | tee -a ${SRC_PATH}/package_list 1>/dev/null
+	while [[ ${#} -gt 0 ]]; do
+		# Conflict checks.
+		if [[ -d ${SRC_PATH}/${1} ]]; then
+			echo "[!] ${SRC_PATH}/${1} already exists. Deleting." >&2
+			rm -rf ${SRC_PATH}/${1}
 		fi
-		rm -rf ${SRC_PATH}/${1}
-		return 0
+
+		pushd ${SRC_PATH} 1>/dev/null
+		git clone https://aur.archlinux.org/${1}.git
+		[[ -z $(ls ${SRC_PATH}/${1} 2>/dev/null) ]] \
+			&& local GIT_EXIT_STATUS=1 \
+			|| local GIT_EXIT_STATUS=0
+		popd 1>/dev/null
+		if [[ ${GIT_EXIT_STATUS} == 0 ]]; then
+			pushd ${SRC_PATH}/${1} 1>/dev/null
+			makepkg -sirc
+			local MAKEPKG_EXIT_STATUS=${?}
+			popd 1>/dev/null
+		else
+			echo "[-] Pulled an empty repository: ${1}. Skipping." >&2
+			local MAKEPKG_EXIT_STATUS=1
+			rm -rf ${SRC_PATH}/${1}
+		fi
+		if [[ ${MAKEPKG_EXIT_STATUS} == 0 ]]; then
+			if [[ ! $(grep -e "${1}" ${SRC_PATH}/package_list) ]]; then
+				echo ${1} | tee -a ${SRC_PATH}/package_list 1>/dev/null
+			fi
+			rm -rf ${SRC_PATH}/${1}
+		else
+			echo "[-] Could not install ${1}. Skipping." >&2
+			rm -rf ${SRC_PATH}/${1}
+			((ERROR_COUNT=ERROR_COUNT+1))
+		fi
+		shift
+	done
+
+	if [[ ${ERROR_COUNT} == 0 ]]; then
+		echo "[+] All packages successfully installed."
 	else
-		echo "[-] Could not install ${1}. Exiting." >&2
-		rm -rf ${SRC_PATH}/${1}
-		return 4
+		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages could not be installed." >&2
 	fi
+
+	umask ${OLD_UMASK}
+
+	return ${ERROR_COUNT}
+}
+
+aur-remove() {
+	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
+	local ERROR_COUNT=0
+	local PACKAGE_COUNT=${#}
+	
+	# Sanity checks.
+	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
+		echo "[-] Package list empty or not found. Exiting." >&2
+		return 1
+	fi
+
+	while [[ ${#} -gt 0 ]]; do
+		if [[ $(grep -e "^${1}$" ${SRC_PATH}/package_list) ]]; then
+			sed -i "/^${1}$/d" ${SRC_PATH}/package_list
+			echo "[+] Package \"${1}\" removed from ${SRC_PATH}/package_list."
+		else
+			echo "[-] Package \"${1}\" not found in ${SRC_PATH}/package_list. Skipping." >&2
+			((ERROR_COUNT=ERROR_COUNT+1))
+		fi
+		shift
+	done
+
+	if [[ ${ERROR_COUNT} == 0 ]]; then
+		echo "[+] All packages successfully removed."
+	else
+		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages were not found in ${SRC_PATH}/package_list." >&2
+	fi
+
+	return 0
 }
 
 aur-update() {
@@ -66,14 +113,37 @@ aur-update() {
 		echo "[-] Package list empty or not found. Exiting." >&2
 		return 1
 	fi
+	if [[ ! $(command -v curl) ]]; then
+		echo '[-] curl not found. Exiting.' >&2
+		return 2
+	fi
+	if [[ ! $(command -v jq) ]]; then
+		echo '[-] jq not found. Exiting.' >&2
+		return 3
+	fi
+	if [[ ! $(command -v pacman) ]]; then
+		echo '[-] pacman not found. Exiting.' >&2
+		return 4
+	fi
 	if [[ ! $(command -v aur-install) ]]; then
 		echo "[-] Dependent function not found: aur-install. Exiting." >&2
-		return 2
+		return 5
 	fi
 	
 	# Execution.
-	for ITEM in $(cat ${SRC_PATH}/package_list); do
-		aur-install ${ITEM} || echo "[-] Could not install ${ITEM}. Skipping."
+	for PACKAGE in $(cat ${SRC_PATH}/package_list); do
+		LATEST_VERSION=$(curl https://aur.archlinux.org/rpc/v5/info?arg[]=${PACKAGE} 2>/dev/null | jq .results.[0].Version | tr -d '"')
+		INSTALLED_VERSION=$(sudo pacman -Qi ${PACKAGE} 2>/dev/null | grep -e "Version" | awk '{ print $3 }')
+		if [[ ${LATEST_VERSION} != ${INSTALLED_VERSION} ]]; then 
+			aur-install ${PACKAGE}
+			if [[ ${?} == 0 ]]; then
+				echo "[+] ${PACKAGE} updated."
+			else
+				echo "[-] Could not update ${PACKAGE}. Skipping."
+			fi
+		else
+			echo "[i] ${PACKAGE} is up to date."
+		fi
 	done
 	
 	return 0
