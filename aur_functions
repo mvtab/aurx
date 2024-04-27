@@ -7,7 +7,7 @@ aur-install() {
 	local NOT_FOUND_COUNT=0
 	local INSTALLED_COUNT=0
 	local ERROR_COUNT=0
-	local REQUIRED_PACKAGES=('git' 'makepkg')
+	local REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
 
 	umask 0077
 
