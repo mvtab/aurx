@@ -7,6 +7,8 @@ source aur_functions
 
 # (Optional) export AUR_SRC_PATH=./somedir
 # default: ${HOME}/.src
+# (Optional) export AUR_FORCE_REINSTALL="yes"
+# default: no
 
 aur-install [PACKAGE..]
 
