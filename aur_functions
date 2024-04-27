@@ -78,9 +78,7 @@ aur-install() {
 		shift
 	done
 
-	if [[ ${ERROR_COUNT} == 0 ]]; then
-		echo "[+] ${PACKAGE_COUNT} packages successfully processed."
-	else
+	if [[ ${ERROR_COUNT} != 0 ]]; then
 		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages could not be installed." >&2
 	fi
 	if [[ ${INSTALLED_COUNT} != 0 ]] || [[ ${ALREADY_INSTALLED_COUNT} != 0 ]]; then
@@ -153,9 +151,7 @@ aur-remove() {
 		shift
 	done
 
-	if [[ ${ERROR_COUNT} == 0 ]]; then
-		echo "[+] ${PACKAGE_COUNT} packages successfully processed."
-	else
+	if [[ ${ERROR_COUNT} != 0 ]]; then
 		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages could not be removed." >&2
 	fi
 	if [[ ${REMOVED_COUNT} != 0 ]]; then
@@ -207,9 +203,7 @@ aur-update() {
 		fi
 	done
 
-	if [[ ${ERROR_COUNT} == 0 ]]; then
-		echo "[+] ${PACKAGE_COUNT} packages successfully processed."
-	else
+	if [[ ${ERROR_COUNT} != 0 ]]; then
 		echo "[-] Could not update ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages." >&2
 	fi
 	if [[ ${UPDATED_COUNT} != 0 ]] || [[ ${UP_TO_DATE_COUNT} != 0 ]]; then
