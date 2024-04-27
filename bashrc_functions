@@ -103,6 +103,7 @@ aur-remove() {
 
 	return 0
 }
+
 aur-update() {
 	local SRC_PATH="${SRC_PATH:-${HOME}/.src}"
 	local PACKAGE_COUNT=$(cat ${SRC_PATH}/package_list | wc -l)
