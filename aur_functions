@@ -181,8 +181,8 @@ aur-update() {
 	
 	# Execution.
 	for PACKAGE in $(cat ${SRC_PATH}/package_list); do
-		LATEST_VERSION=$(curl https://aur.archlinux.org/rpc/v5/info?arg[]=${PACKAGE} 2>/dev/null | jq .results.[0].Version | tr -d '"')
-		INSTALLED_VERSION=$(sudo pacman -Qi ${PACKAGE} 2>/dev/null | grep -e "Version" | awk '{ print $3 }')
+		local LATEST_VERSION=$(curl https://aur.archlinux.org/rpc/v5/info?arg[]=${PACKAGE} 2>/dev/null | jq .results.[0].Version | tr -d '"')
+		local INSTALLED_VERSION=$(sudo pacman -Qi ${PACKAGE} 2>/dev/null | grep -e "Version" | awk '{ print $3 }')
 		if [[ ${LATEST_VERSION} != ${INSTALLED_VERSION} ]]; then 
 			aur-install ${PACKAGE}
 			if [[ ${?} == 0 ]]; then
