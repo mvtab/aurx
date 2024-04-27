@@ -29,7 +29,7 @@ aur-install() {
 	# Execution.
 	while [[ ${#} -gt 0 ]]; do
 		# Conflict checks.
-		if [[ $(sudo pacman -Qi ${1}) ]]; then
+		if [[ $(sudo pacman -Qi ${1} 2>/dev/null) ]]; then
 			echo "[+] Package \"${1}\" already installed. Skipping."
 			((ALREADY_INSTALLED_COUNT=ALREADY_INSTALLED_COUNT+1))
 			shift
