@@ -4,14 +4,9 @@
 ## Installation
 ```bash
 source aur_functions
-
 # or 
-
 cat aur_functions >> .bashrc
-
-# or
-
-..
+# or any other way to use a function in bash.
 ```
 ## Configuration
 The functions read the following environment variables:
