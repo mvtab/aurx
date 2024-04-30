@@ -1,6 +1,8 @@
 aur-install() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local FORCE_REINSTALL="${AUR_FORCE_REINSTALL:-no}"
+	local CLEAN_SOURCE="${AUR_CLEAN_SOURCE:-no}"
+	local DELETE_SOURCE_ON_FAIL="${AUR_DELETE_SOURCE_ON_FAIL:-no}"
 	local OLD_UMASK=$(umask)
 	local PACKAGE_COUNT=${#}
 	local ALREADY_INSTALLED_COUNT=0
@@ -42,7 +44,7 @@ aur-install() {
 		elif [[ ${LATEST_VERSION} != ${INSTALLED_VERSION} ]]; then
 			echo "[i] Package \"${1}\" is installed but a new version is available. Installing." 
 		fi
-		if [[ -d ${SRC_PATH}/${1} ]]; then
+		if [[ "${CLEAN_SOURCE}" == "yes" ]] && [[ -d ${SRC_PATH}/${1} ]]; then
 			echo "[!] \"${SRC_PATH}/${1}\" already exists. Deleting." >&2
 			rm -rf ${SRC_PATH}/${1}
 		fi
@@ -72,7 +74,9 @@ aur-install() {
 			rm -rf ${SRC_PATH}/${1}
 		else
 			echo "[-] Could not install \"${1}\". Skipping." >&2
-			rm -rf ${SRC_PATH}/${1}
+			if [[ "${DELETE_SOURCE_ON_FAIL}" == "yes" ]]; then
+				rm -rf ${SRC_PATH}/${1}
+			fi
 			((ERROR_COUNT=ERROR_COUNT+1))
 		fi
 		shift
@@ -119,10 +123,10 @@ aur-remove() {
 						sudo pacman -Rsu ${1}
 						;;
 					medium)
-						sudo pacman -Rns ${1}
+						sudo pacman -Rsunc ${1}
 						;;
 					full)
-						sudo pacman -Rnsc ${1}
+						sudo pacman -Rsnc ${1}
 						;;
 					*)
 						echo "[-] The environment variable \"AUR_REMOVE_DEPENDENCIES\" has a wrong value: \"${REMOVE_DEPENDENCIES}\"." >&2
