@@ -2,6 +2,7 @@ aur-install() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local FORCE_REINSTALL="${AUR_FORCE_REINSTALL:-no}"
 	local CLEAN_SOURCE="${AUR_CLEAN_SOURCE:-no}"
+	local DELETE_SOURCE_ON_SUCCESS="${AUR_DELETE_SOURCE_ON_SUCCESS:-yes}"
 	local DELETE_SOURCE_ON_FAIL="${AUR_DELETE_SOURCE_ON_FAIL:-no}"
 	local OLD_UMASK=$(umask)
 	local PACKAGE_COUNT=${#}
@@ -71,7 +72,9 @@ aur-install() {
 				echo ${1} | tee -a ${SRC_PATH}/package_list 1>/dev/null
 			fi
 			((INSTALLED_COUNT=INSTALLED_COUNT+1))
-			rm -rf ${SRC_PATH}/${1}
+			if [[ "${DELETE_SOURCE_ON_SUCCESS}" == "yes" ]]; then
+				rm -rf ${SRC_PATH}/${1}
+			fi
 		else
 			echo "[-] Could not install \"${1}\". Skipping." >&2
 			if [[ "${DELETE_SOURCE_ON_FAIL}" == "yes" ]]; then
@@ -82,11 +85,14 @@ aur-install() {
 		shift
 	done
 
+	if [[ ${INSTALLED_COUNT} != 0 ]]; then
+		echo "[+] ${INSTALLED_COUNT} new packages installed."
+	fi
+	if [[ ${ALREADY_INSTALLED_COUNT} != 0 ]]; then
+		echo "[+] ${ALREADY_INSTALLED_COUNT} packages were already installed and up to date."
+	fi
 	if [[ ${ERROR_COUNT} != 0 ]]; then
 		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages could not be installed." >&2
-	fi
-	if [[ ${INSTALLED_COUNT} != 0 ]] || [[ ${ALREADY_INSTALLED_COUNT} != 0 ]]; then
-		echo "[+] ${INSTALLED_COUNT} new packages installed and ${ALREADY_INSTALLED_COUNT} packages were already installed."
 	fi
 	if [[ ${NOT_FOUND_COUNT} != 0 ]]; then
 		echo "[-] ${NOT_FOUND_COUNT} could not be found in the Archlinux User Repository." >&2
@@ -107,62 +113,72 @@ aur-remove() {
 	local PACKAGE_COUNT=${#}
 	
 	# Sanity checks.
-	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
-		echo "[-] Package list empty or not found. Exiting." >&2
+	if [[ ! -f ${SRC_PATH}/package_list ]]; then
+		echo "[-] Package list not found. Exiting." >&2
+		return 1
+	fi
+	if [[ -z "$(cat ${SRC_PATH}/package_list 2>/dev/null)" ]]; then
+		echo "[-] Package list empty. Exiting." >&2
 		return 1
 	fi
 
 	while [[ ${#} -gt 0 ]]; do
-		if [[ $(grep -e "^${1}$" ${SRC_PATH}/package_list) ]]; then
-			if [[ $(sudo pacman -Qi ${1} 2>/dev/null) ]]; then
-				case ${REMOVE_DEPENDENCIES} in
-					none)
-						sudo pacman -R ${1}
-						;;
-					low)
-						sudo pacman -Rsu ${1}
-						;;
-					medium)
-						sudo pacman -Rsunc ${1}
-						;;
-					full)
-						sudo pacman -Rsnc ${1}
-						;;
-					*)
-						echo "[-] The environment variable \"AUR_REMOVE_DEPENDENCIES\" has a wrong value: \"${REMOVE_DEPENDENCIES}\"." >&2
-						echo "[-] Accepted are: \"none\", \"low\", \"medium\", \"full\". Exiting." >&2
-						return 2
-				esac
-				if [[ ${?} == 0 ]]; then
-					echo "[+] Package \"${1}\" removed."
-					((REMOVED_COUNT=REMOVED_COUNT+1))
-					sed -i "/^${1}$/d" ${SRC_PATH}/package_list
-					echo "[+] Package \"${1}\" removed from ${SRC_PATH}/package_list."
-				else
-					echo "[-] Could not uninstall package \"${1}\"." >&2
-					((ERROR_COUNT=ERROR_COUNT+1))
-				fi
-			else
-				echo "[-] Package \"${1}\" not found on system. Skipping." >&2
-				((NOT_INSTALLED_COUNT=NOT_INSTALLED_COUNT+1))
-				sed -i "/^${1}$/d" ${SRC_PATH}/package_list
-				echo "[+] Package \"${1}\" removed from ${SRC_PATH}/package_list."
-			fi
-		else
+		if [[ ! $(grep -e "^${1}$" ${SRC_PATH}/package_list) ]]; then
 			echo "[-] Package \"${1}\" not found in \"${SRC_PATH}/package_list\". Skipping." >&2
 			((NOT_FOUND_COUNT=NOT_FOUND_COUNT+1))
+			shift
+			continue
+		fi
+		if [[ ! $(sudo pacman -Qi ${1} 2>/dev/null) ]]; then
+			echo "[-] Package \"${1}\" not found on system. Skipping." >&2
+			((NOT_INSTALLED_COUNT=NOT_INSTALLED_COUNT+1))
+			sed -i "/^${1}$/d" ${SRC_PATH}/package_list
+			echo "[+] Package \"${1}\" removed from ${SRC_PATH}/package_list."
+			shift
+			continue
+		fi
+		case ${REMOVE_DEPENDENCIES} in
+			none)
+				local PACMAN_UNINSTALL_ARGUMENTS='-R'
+				;;
+			low)
+				local PACMAN_UNINSTALL_ARGUMENTS='-Rs'
+				;;
+			medium)
+				local PACMAN_UNINSTALL_ARGUMENTS='-Rcnsu'
+				;;
+			full)
+				local PACMAN_UNINSTALL_ARGUMENTS='-Rcns'
+				;;
+			*)
+				echo "[-] The environment variable \"AUR_REMOVE_DEPENDENCIES\" has a wrong value: \"${REMOVE_DEPENDENCIES}\"." >&2
+				echo "[-] Accepted are: \"none\", \"low\", \"medium\", \"full\". Exiting." >&2
+				return 2
+		esac
+		sudo pacman "${PACMAN_UNINSTALL_ARGUMENTS}" ${1}
+		if [[ ${?} == 0 ]]; then
+			echo "[+] Package \"${1}\" removed."
+			((REMOVED_COUNT=REMOVED_COUNT+1))
+			sed -i "/^${1}$/d" ${SRC_PATH}/package_list
+			echo "[+] Package \"${1}\" removed from ${SRC_PATH}/package_list."
+		else
+			echo "[-] Could not uninstall package \"${1}\"." >&2
+			((ERROR_COUNT=ERROR_COUNT+1))
 		fi
 		shift
 	done
 
-	if [[ ${ERROR_COUNT} != 0 ]]; then
-		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages could not be removed." >&2
-	fi
 	if [[ ${REMOVED_COUNT} != 0 ]]; then
 		echo "[+] ${REMOVED_COUNT} packages removed."
 	fi
-	if [[ ${NOT_INSTALLED_COUNT} != 0 ]] || [[ ${NOT_FOUND_COUNT} != 0 ]]; then
-		echo "[-] ${NOT_INSTALLED_COUNT} packages were not installed on the system and ${NOT_FOUND_COUNT} could not be found in \"${SRC_PATH}/package_list\"." >&2
+	if [[ ${ERROR_COUNT} != 0 ]]; then
+		echo "[-] ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages not removed." >&2
+	fi
+	if [[ ${NOT_FOUND_COUNT} != 0 ]]; then
+		echo "[-] ${NOT_FOUND_COUNT} not found in \"${SRC_PATH}/package_list\"." >&2
+	fi
+	if [[ ${NOT_INSTALLED_COUNT} != 0 ]]; then
+		echo "[-] ${NOT_INSTALLED_COUNT} packages were not installed on the system." >&2
 	fi
 
 	return ${ERROR_COUNT}
@@ -170,21 +186,25 @@ aur-remove() {
 
 aur-update() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
-	local PACKAGE_COUNT=$(cat ${SRC_PATH}/package_list | wc -l)
+	local PACKAGE_COUNT=$(cat ${SRC_PATH}/package_list 2>/dev/null | wc -l)
 	local UP_TO_DATE_COUNT=0
 	local UPDATED_COUNT=0
 	local ERROR_COUNT=0
 	local REQUIRED_PACKAGES=('curl' 'jq' 'pacman' 'aur-install')
 	
 	# Sanity checks.
-	if [[ ! -f ${SRC_PATH}/package_list ]] || [[ -z "$(cat ${SRC_PATH}/package_list)" ]]; then
-		echo "[-] Package list empty or not found. Exiting." >&2
+	if [[ ! -f ${SRC_PATH}/package_list ]]; then
+		echo "[-] Package list not found. Exiting." >&2
+		return 1
+	fi
+	if [[ -z "$(cat ${SRC_PATH}/package_list 2>/dev/null)" ]]; then
+		echo "[-] Package list empty. Exiting." >&2
 		return 1
 	fi
 	for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
 		if [[ ! $(command -v ${PACKAGE}) ]]; then
 			echo "[-] \"${PACKAGE}\" not found. Exiting." >&2
-			return 2
+			return 1
 		fi
 	done
 	
@@ -192,26 +212,30 @@ aur-update() {
 	for PACKAGE in $(cat ${SRC_PATH}/package_list); do
 		local LATEST_VERSION=$(curl https://aur.archlinux.org/rpc/v5/info?arg[]=${PACKAGE} 2>/dev/null | jq .results.[0].Version | tr -d '"')
 		local INSTALLED_VERSION=$(sudo pacman -Qi ${PACKAGE} 2>/dev/null | grep -e "Version" | awk '{ print $3 }')
-		if [[ ${LATEST_VERSION} != ${INSTALLED_VERSION} ]]; then 
-			aur-install ${PACKAGE}
-			if [[ ${?} == 0 ]]; then
-				echo "[+] \"${PACKAGE}\" updated."
-				((UPDATED_COUNT=UPDATED_COUNT+1))
-			else
-				echo "[-] Could not update \"${PACKAGE}\". Skipping." >&2
-				((ERROR_COUNT=ERROR_COUNT+1))
-			fi
-		else
+		if [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]]; then 
 			echo "[i] \"${PACKAGE}\" is up to date."
 			((UP_TO_DATE_COUNT=UP_TO_DATE_COUNT+1))
+			shift
+			continue
+		fi
+		aur-install ${PACKAGE}
+		if [[ ${?} == 0 ]]; then
+			echo "[+] \"${PACKAGE}\" updated."
+			((UPDATED_COUNT=UPDATED_COUNT+1))
+		else
+			echo "[-] Could not update \"${PACKAGE}\". Skipping." >&2
+			((ERROR_COUNT=ERROR_COUNT+1))
 		fi
 	done
 
 	if [[ ${ERROR_COUNT} != 0 ]]; then
 		echo "[-] Could not update ${ERROR_COUNT} out of ${PACKAGE_COUNT} packages." >&2
 	fi
-	if [[ ${UPDATED_COUNT} != 0 ]] || [[ ${UP_TO_DATE_COUNT} != 0 ]]; then
-		echo "[+] ${UPDATED_COUNT} packages have been updated and ${UP_TO_DATE_COUNT} were already up to date."
+	if [[ ${UPDATED_COUNT} != 0 ]]; then
+		echo "[+] ${UPDATED_COUNT} packages updated."
+	fi
+	if [[ ${UP_TO_DATE_COUNT} != 0 ]]; then
+		echo "[+] ${UP_TO_DATE_COUNT} packages already up to date."
 	fi
 
 	return ${ERROR_COUNT}

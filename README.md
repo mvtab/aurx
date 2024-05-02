@@ -26,8 +26,12 @@ The functions read the following environment variables:
   Delete source directory if it already exists before installation.  
   Default: "no"
 
+> **AUR_DELETE_SOURCE_ON_SUCCESS**  
+  Delete source if installation succeeds.  
+  Default: "yes"
+ 
 > **AUR_DELETE_SOURCE_ON_FAIL**  
-  Delete source even if installation fails.  
+  Delete source if installation fails.  
   Default: "no"
  
  - aur-remove:
