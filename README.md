@@ -39,9 +39,9 @@ The functions read the following environment variables:
   Remove also dependencies of selected packages.  
   Options are:  
   none -> 	pacman -R  
-  low -> pacman -Rsu  
-  medium -> pacman -Rsunc  
-  full -> pacman -Rsnc  
+  low -> pacman -Rs  
+  medium -> pacman -Rcnsu  
+  full -> pacman -Rcns  
 
 ## Usage
 Set any environment variables either by exporting them:
