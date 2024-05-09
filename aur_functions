@@ -40,6 +40,9 @@ aur-install() {
 		if [[ "${FORCE_REINSTALL}" != "yes" ]] && [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]]; then
 			echo "[+] Package \"${1}\" already installed. Skipping."
 			((ALREADY_INSTALLED_COUNT=ALREADY_INSTALLED_COUNT+1))
+			if [[ ! $(grep -e "${1}" ${SRC_PATH}/package_list) ]]; then
+				echo ${1} | tee -a ${SRC_PATH}/package_list 1>/dev/null
+			fi
 			shift
 			continue
 		elif [[ -z ${INSTALLED_VERSION} ]]; then
