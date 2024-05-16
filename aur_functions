@@ -108,6 +108,21 @@ aur-install() {
 	return ${ERROR_COUNT}
 }
 
+aur-search() {
+	SEARCH_PATTERN="${1}"
+	SEARCH_PATTERN=${SEARCH_PATTERN//[^a-zA-Z0-9_-]/}
+	RESULTS=$(curl https://aur.archlinux.org/rpc/v5/search/${SEARCH_PATTERN}?by=name 2>/dev/null \
+			| jq -r '.results[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
+	
+	if [[ ! -z ${RESULTS} ]]; then
+		echo "${RESULTS}"
+		return 0
+	else
+		echo "[-] No package found." >&2
+		return 1
+	fi
+}
+
 aur-remove() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local REMOVE_DEPENDENCIES=${AUR_REMOVE_DEPENDENCIES:-none}

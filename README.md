@@ -57,6 +57,7 @@ AUR_SRC_PATH="/tmp" AUR_FORCE_REINSTALL="yes" aur-install test
 and minimally manage aur packages:
 ```bash
 aur-install [PACKAGE..]
+aur-search [NAME PATTERN..]
 aur-remove [PACKAGE..]
 aur-update
 ```
