@@ -55,9 +55,9 @@ The functions read the following environment variables:
 - aur-remove:
 > **AUR_REMOVE_DEPENDENCIES**  
   Remove also dependencies of selected packages.  
-  Default: "none"
+  Default: "none"  
   Options are:  
-  none -> 	pacman -R  
+  none -> pacman -R  
   low -> pacman -Rs  
   medium -> pacman -Rcnsu  
   full -> pacman -Rcns  
