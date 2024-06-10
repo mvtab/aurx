@@ -48,9 +48,9 @@ The functions read the following environment variables:
   checkdepends -> search for packages that checkdepend on keywords  
   starts_with -> return a list of packages that start with the selected pattern  
 
-> **AUR_MAX_SEARCH_RESULTS**
-  How many results to return.
-  Default: 20
+> **AUR_MAX_SEARCH_RESULTS**  
+  How many results to return.  
+  Default: 20  
  
 - aur-remove:
 > **AUR_REMOVE_DEPENDENCIES**  
