@@ -33,10 +33,29 @@ The functions read the following environment variables:
 > **AUR_DELETE_SOURCE_ON_FAIL**  
   Delete source if installation fails.  
   Default: "no"
+
+- aur-search:
+> **AUR_SEARCH_BY**
+  The search criteria. More info [here](https://wiki.archlinux.org/title/Aurweb_RPC_interface).
+  Default: "name"
+  Options are:
+  name -> search by package name only
+  name-desc -> search by package name and description
+  maintainer -> search by package maintainer
+  depends -> search for packages that depend on keywords
+  makedepends -> search for packages that makedepend on keywords
+  optdepends -> search for packages that optdepend on keywords
+  checkdepends -> search for packages that checkdepend on keywords
+  starts_with -> return a list of packages that start with the selected pattern
+
+> **AUR_MAX_SEARCH_RESULTS**
+  How many results to return.
+  Default: 20
  
- - aur-remove:
+- aur-remove:
 > **AUR_REMOVE_DEPENDENCIES**  
   Remove also dependencies of selected packages.  
+  Default: "none"
   Options are:  
   none -> 	pacman -R  
   low -> pacman -Rs  
