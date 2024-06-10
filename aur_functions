@@ -121,11 +121,11 @@ aur-search() {
 
 	case "${SEARCH_BY}" in
 		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends)
-			local RESULTS=$(curl https://aur.archlinux.org/rpc/v5/search/${SEARCH_PATTERN}?by=${AUR_SEARCH_BY} 2>/dev/null \
+			local RESULTS=$(curl https://aur.archlinux.org/rpc/v5/search/${SEARCH_PATTERN}?by=${SEARCH_BY} 2>/dev/null \
 				| jq -r ".results[:${MAX_SEARCH_RESULTS}]" | jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
 			;;
 		starts_with)
-			local RESULTS=$(curl https://aur.archlinux.org/rpc/v5/suggest/${1} 2>/dev/null | jq -r ".[:${MAX_SEARCH_RESULTS}]")
+			local RESULTS=$(curl https://aur.archlinux.org/rpc/v5/suggest/${SEARCH_PATTERN} 2>/dev/null | jq -r ".[:${MAX_SEARCH_RESULTS}]")
 			;;
 		*)
 			echo "[-] The environment variable \"AUR_SEARCH_BY\" has a wrong value: \"${SEARCH_BY}\"." >&2
