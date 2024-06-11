@@ -190,7 +190,7 @@ aur-remove() {
 				;;
 			*)
 				echo "[-] The environment variable \"AUR_REMOVE_DEPENDENCIES\" has a wrong value: \"${REMOVE_DEPENDENCIES}\"." >&2
-				echo "[i] Accepted are: \"none\", \"low\", \"medium\", \"full\". Exiting." >&2
+				echo "[i] Accepted are: \"none\", \"safe\", \"aggressive\". Exiting." >&2
 				return 1
 				;;
 		esac
