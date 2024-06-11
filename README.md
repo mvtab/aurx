@@ -58,9 +58,8 @@ The functions read the following environment variables:
   Default: "none"  
   Options are:  
   none -> pacman -R  
-  low -> pacman -Rs  
-  medium -> pacman -Rcnsu  
-  full -> pacman -Rcns  
+  safe -> pacman -Rs  
+  aggressive -> pacman -Rcnsu  
 
 ## Usage
 Set any environment variables either by exporting them:

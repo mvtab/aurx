@@ -182,14 +182,11 @@ aur-remove() {
 			none)
 				local PACMAN_UNINSTALL_ARGUMENTS='-R'
 				;;
-			low)
+			safe)
 				local PACMAN_UNINSTALL_ARGUMENTS='-Rs'
 				;;
-			medium)
+			aggressive)
 				local PACMAN_UNINSTALL_ARGUMENTS='-Rcnsu'
-				;;
-			full)
-				local PACMAN_UNINSTALL_ARGUMENTS='-Rcns'
 				;;
 			*)
 				echo "[-] The environment variable \"AUR_REMOVE_DEPENDENCIES\" has a wrong value: \"${REMOVE_DEPENDENCIES}\"." >&2
