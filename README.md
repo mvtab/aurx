@@ -5,8 +5,6 @@
 ```bash
 source ./aur-<function>
 # or 
-chmod +111 ./aur-<function> && ./aur-<function>
-# or
 cat ./aur-<function> >> .bashrc
 # or 
 # any other way to use a function in bash.
