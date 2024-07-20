@@ -3,10 +3,13 @@
 
 ## Installation
 ```bash
-source aur_functions
+source ./aur-<function>
 # or 
-cat aur_functions >> .bashrc
-# or any other way to use a function in bash.
+chmod +111 ./aur-<function> && ./aur-<function>
+# or
+cat ./aur-<function> >> .bashrc
+# or 
+# any other way to use a function in bash.
 ```
 ## Configuration
 The functions read the following environment variables:
@@ -79,3 +82,4 @@ aur-search KEYWORD
 aur-remove [PACKAGE..]
 aur-update
 ```
+
