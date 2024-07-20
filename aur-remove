@@ -1,5 +1,3 @@
-#!/bin/bash
-
 aur-remove() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local REMOVE_DEPENDENCIES=${AUR_REMOVE_DEPENDENCIES:-none}

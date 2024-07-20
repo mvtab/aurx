@@ -1,5 +1,3 @@
-#!/bin/bash
-
 aur-install() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local FORCE_REINSTALL="${AUR_FORCE_REINSTALL:-no}"

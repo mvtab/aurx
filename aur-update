@@ -1,5 +1,3 @@
-#!/bin/bash
-
 aur-update() {
 	local SRC_PATH="${AUR_SRC_PATH:-${HOME}/.src}"
 	local PACKAGE_COUNT=$(cat ${SRC_PATH}/package_list 2>/dev/null | wc -l)
