@@ -1,83 +1,36 @@
 # aurx
-Archlinux User Repository eXplorer
+The Archlinux User Repository eXplorer.
 
 ## Installation
-```bash
-source ./aurx-<function>
-# or 
-cat ./aurx-<function> >> .bashrc
-# or 
-# any other way to use a function in bash.
 ```
-## Configuration
-The functions read the following environment variables:
-- General:
-
->  **AUR_SRC_PATH**  
-  Work directory of the function.  
-  Will store ${SRC_PATH}/package_list persistently.  
-  Default: "${HOME}/.src"
-  
-- aur-install:
- > **AUR_FORCE_REINSTALL**  
-   Install packages even if they are already installed and up to date.  
-  Default: "no"
-  
-> **AUR_CLEAN_SOURCE**  
-  Delete source directory if it already exists before installation.  
-  Default: "no"
-
-> **AUR_DELETE_SOURCE_ON_SUCCESS**  
-  Delete source if installation succeeds.  
-  Default: "yes"
- 
-> **AUR_DELETE_SOURCE_ON_FAIL**  
-  Delete source if installation fails.  
-  Default: "no"
-
-- aur-search:  
-> **AUR_SEARCH_BY**  
-  The search criteria. More info [here](https://wiki.archlinux.org/title/Aurweb_RPC_interface).  
-  Default: "name"  
-  Options are:  
-  name -> search by package name only  
-  name-desc -> search by package name and description  
-  maintainer -> search by package maintainer  
-  depends -> search for packages that depend on keywords  
-  makedepends -> search for packages that makedepend on keywords  
-  optdepends -> search for packages that optdepend on keywords  
-  checkdepends -> search for packages that checkdepend on keywords  
-  starts_with -> return a list of packages that start with the selected pattern  
-
-> **AUR_MAX_SEARCH_RESULTS**  
-  How many results to return.  
-  Default: 20  
- 
-- aur-remove:
-> **AUR_REMOVE_DEPENDENCIES**  
-  Remove also dependencies of selected packages.  
-  Default: "none"  
-  Options are:  
-  none -> pacman -R  
-  safe -> pacman -Rs  
-  aggressive -> pacman -Rcnsu  
-
-## Usage
-Set any environment variables either by exporting them:
-```bash
-export VARIABLE=VALUE
-```
-or inline at execution:
-```bash
-[VARIABLE=VALUE].. aur-install [PACKAGE]..
-AUR_SRC_PATH="/tmp" AUR_FORCE_REINSTALL="yes" aur-install test
+git clone git@github.com:mvtab/aurx.git
+cd aurx/
+chmod +111 ./aurx
+./aurx --help
 ```
 
-and minimally manage aur packages:
+## Configuration and usage
 ```bash
-aur-install [PACKAGE..]
-aur-search KEYWORD
-aur-remove [PACKAGE..]
-aur-update
+The Archlinux User Repository eXplorer.
+usage: ./aurx [OPERATION] [OPTION..] [PACKAGE..] 
+
+Operations:
+  install                   Clone packages and install them with makepkg.
+  remove                    Remove packages from system and the package_list.
+  update                    Update packages by comparing their installed version with the latest.
+  search                    Query the AUR repository with specific criterias and keywords.
+
+Options:
+  -a, --all                 Include all packages from the package_list.
+  -c, --cleanup             Delete sources after successful installs.
+  -C, --clean-operation     Delete sources after unsucessful installs.
+  -f, --force               Forces the current process, where appliable.
+  -h, --help                Display this information and exit.
+  -r, --results-count       Number of results to display from search queries.
+  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
+  -s, --source-path         Work directory for builds and persistent information.
+  -S, --search-criteria     Criteria to use in search queries.
+  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
+  -w, --wipe-existing       Wipe eventually existing source.
 ```
 

@@ -8,6 +8,12 @@ usage() {
 		The Archlinux User Repository eXplorer.
 		usage: ${0} [OPERATION] [OPTION..] [PACKAGE..] 
 		
+		Operations:
+		  install                   Clone packages and install them with makepkg.
+		  remove                    Remove packages from system and the package_list.
+		  update                    Update packages by comparing their installed version with the latest.
+		  search                    Query the AUR repository with specific criterias and keywords.
+		
 		Options:
 		  -a, --all                 Include all packages from the package_list.
 		  -c, --cleanup             Delete sources after successful installs.
