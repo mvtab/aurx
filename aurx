@@ -1,0 +1,399 @@
+#!/bin/bash
+
+# Catch more kinds of errors.
+set -o pipefail -o noclobber -o nounset
+
+usage() {
+	cat <<- EOF
+		The Archlinux User Repository eXplorer.
+		usage: ${0} [OPERATION] [OPTION..] [PACKAGE..] 
+		
+		Options:
+		  -a, --all                 Include all packages from the package_list.
+		  -c, --cleanup             Delete sources after successful installs.
+		  -C, --clean-operation     Delete sources after unsucessful installs.
+		  -f, --force               Forces the current process, where appliable.
+		  -h, --help                Display this information and exit.
+		  -r, --results-count       Number of results to display from search queries.
+		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
+		  -s, --source-path         Work directory for builds and persistent information.
+		  -S, --search-criteria     Criteria to use in search queries.
+		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
+		  -w, --wipe-existing       Wipe eventually existing source.
+	EOF
+}
+
+print_error() {
+	GIVEN_ERROR=${1}
+
+	case "${GIVEN_ERROR}" in
+		1 | 2)
+			echo "[-] getopt not working properly."
+			;;
+		3)
+			echo "[-] Unknown error while parsing options."
+			;;
+		4)
+			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			;;
+		5)
+			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			;;
+		6)
+			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
+			;;
+		7)
+			echo "[!] Can't install or update packages as root."
+			;;
+		8)
+			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
+			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, starts_with."
+			;;
+		9)
+			echo "[-] Unknown verbosity level \"${VERBOSITY}\"."
+			echo "[i] Possible options are: 0 - nothing, 1 - stderr, 2 - all"
+			;;
+		10)
+			;;
+		11)
+			echo "[!] Could not clone git repository of \"${SELECTED_PACKAGE}\"."
+			;;
+		12)
+			echo "[!] Could not build \"${SELECTED_PACKAGE}\"."
+			;;
+		13)
+			echo "[!] Could not write \"${SELECTED_PACKAGE}\" to the package_list."
+			;;
+		20)
+			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from system."
+			;;
+		21)
+			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
+			;;
+		30)
+			;;
+		31)
+			echo "[!] Could not update \"${SELECTED_PACKAGE}\"."
+			;;
+		40)
+			echo "[!] No search results found for \"${SELECTED_PACKAGE}\"."
+			;;
+		*)
+			echo "[-] Unknown error occured: ${GIVEN_ERROR}"
+	esac
+}
+
+compare-versions() {
+	TARGET_PACKAGE=${1}
+	local LATEST_VERSION=$(curl \
+		https://aur.archlinux.org/rpc/v5/info?arg[]=${TARGET_PACKAGE} 2> /dev/null \
+		| jq -r .results.[0].Version)
+	local INSTALLED_VERSION=$(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null \
+		| grep -e "Version" | awk '{ print $3 }')
+	if [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]]; then
+		return 1
+	fi
+	return 0
+}
+
+clone-git-repo() {
+	TARGET_PACKAGE=${1}
+	if [[ -d ${SOURCE_PATH}/${TARGET_PACKAGE} ]] && ${WIPE_EXISTING}; then
+		rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+	fi
+	pushd ${SOURCE_PATH} 1> /dev/null
+	git clone https://aur.archlinux.org/${TARGET_PACKAGE}.git 2> /dev/null
+	if [[ -z $(ls ${SOURCE_PATH}/${TARGET_PACKAGE}) ]]; then
+		popd 1> /dev/null
+		return 1
+	fi
+	popd 1> /dev/null
+	return 0
+}
+
+build-makepkg-package() {
+	TARGET_PACKAGE=${1}
+	pushd ${SOURCE_PATH}/${TARGET_PACKAGE} 1> /dev/null
+	makepkg -sirc
+	if [[ ${?} -ne 0 ]]; then
+		popd 1> /dev/null
+		if ${CLEAN_OPERATION}; then
+			rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+		fi
+		return 1
+	fi
+	popd 1> /dev/null
+
+	if ${CLEANUP}; then
+		rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+	fi
+}
+
+remove-from-system() {
+	TARGET_PACKAGE=${1}
+	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) ]]; then
+		sudo pacman ${REMOVE_OPTS} ${TARGET_PACKAGE}
+	else
+		return 1
+	fi
+	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) ]]; then
+		return 2
+	fi
+	return 0
+}
+
+remove-from-package-list() {
+	TARGET_PACKAGE=${1}
+	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
+		sed -i "/^${TARGET_PACKAGE}$/d" ${SOURCE_PATH}/package_list
+	else
+		return 1
+	fi
+	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
+		return 2
+	fi
+	return 0
+}
+
+write-package-list() {
+	TARGET_PACKAGE=${1}
+	if [[ ! $(grep -e "${TARGET_PACKAGE}" ${SOURCE_PATH}/package_list) ]]; then
+		echo ${TARGET_PACKAGE} | tee -a ${SOURCE_PATH}/package_list 1> /dev/null
+	fi
+	if [[ ! $(grep -e "${TARGET_PACKAGE}" ${SOURCE_PATH}/package_list) ]]; then
+		return 1
+	fi
+	return 0
+}
+
+search-by-criteria() {
+	SEARCH_CRITERIA=${1}
+	TARGET_KEYWORD=${2}
+	case "${SEARCH_CRITERIA}" in
+		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends)
+			local RESULTS=$(curl \
+				https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA} 2> /dev/null \
+				| jq -r ".results[:${RESULTS_COUNT}]" \
+				| jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
+			if [[ -z "${RESULTS}" ]]; then
+				return 1
+			fi
+			;;
+		starts_with)
+			local RESULTS=$(curl \
+				https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD} 2> /dev/null \
+				| jq -r ".[:${RESULTS_COUNT}]")
+			if [[ -z "${RESULTS}" ]]; then
+				return 2
+			fi
+			;;
+		*)
+			return 3
+			;;
+	esac
+	echo "${RESULTS}"
+}
+
+
+install-aur-package() {
+	TARGET_PACKAGE=${1}
+	
+	compare-versions ${TARGET_PACKAGE} || ${FORCE_PROCESS} ||  return 10
+
+	clone-git-repo ${TARGET_PACKAGE} || return 11
+	
+	build-makepkg-package ${TARGET_PACKAGE} || return 12
+	
+	write-package-list ${TARGET_PACKAGE} || return 13
+
+	return 0
+}
+
+remove-aur-package() {
+	TARGET_PACKAGE=${1}
+
+	remove-from-system ${TARGET_PACKAGE} || return 20
+
+	remove-from-package-list ${TARGET_PACKAGE} || return 21
+
+	return 0
+}
+
+update-aur-package() {
+	TARGET_PACKAGE=${1}
+
+	compare-versions ${TARGET_PACKAGE} || return 30
+
+	install-aur-package ${TARGET_PACKAGE} || return 31
+	
+	return 0
+}
+
+search-aur-package() {
+	TARGET_KEYWORD=${1}
+
+	search-by-criteria ${SEARCH_CRITERIA} ${TARGET_KEYWORD} || return 40
+
+	return 0
+}
+
+
+getopt --test 1> /dev/null && true
+if [[ ${?} -ne 4 ]]; then
+	print_error 1
+	exit 1
+fi
+
+# Variables.
+POSSIBLE_OPERATIONS=("install" "remove" "update" "search")
+FORCE_PROCESS=${AURX_FORCE_PROCESS:-false}
+VERBOSITY=${AURX_VERBOSITY:-2}
+CLEANUP=${AURX_CLEANUP:-false}
+CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
+WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
+RESULTS_COUNT=${AURX_RESULTS_COUNT:-20}
+PROCESS_ALL=${AURX_PROCESS_ALL:-false}
+REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
+
+# Options.
+LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,results-count:,all,remove-opts:
+OPTIONS=s:v:fhcCwS:r:aR:
+PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
+if [[ ${?} -ne 0 ]]; then
+	print_error 2
+	exit 2
+fi
+
+eval set -- "${PARSED_OPTIONS}"
+
+if [[ -z ${SUDO_USER+x} ]]; then
+	SOURCE_PATH="${HOME}/.src"
+else
+	SOURCE_PATH="/home/${SUDO_USER}/.src"
+fi
+
+while true; do
+	case "${1}" in
+		-a|--all )
+			PROCESS_ALL=true
+			shift
+			;;
+		-c|--cleanup )
+			CLEANUP=true
+			shift
+			;;
+		-C|--clean-operation )
+			CLEAN_OPERATION=true
+			shift
+			;;
+		-f|--force )
+			FORCE_PROCESS=true
+			shift
+			;;
+		-h|--help )
+			usage
+			exit 0
+			;;
+		-r|--results-count )
+			RESULTS_COUNT=${2}
+			shift 2
+			;;
+		-R|--remove-opts )
+			REMOVE_OPTS="${2}"
+			shift 2
+			;;
+		-s|--source-path )
+			SOURCE_PATH="${2}"
+			shift 2
+			;;
+		-S|--search-criteria)
+			SEARCH_CRITERIA="${2}"
+			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends starts_with " =~ "${SEARCH_CRITERIA}" ]]; then
+				print_error 8
+				exit 8
+			fi
+			shift 2
+			;;
+		-v|--verbosity )
+			VERBOSITY="${2}"
+			shift 2
+			;;
+		-w|--wipe-existing )
+			WIPE_EXISTING=true
+			shift
+			;;
+		-- )
+			shift
+			break
+			;;
+		* )
+			print_error 3
+			exit 3
+			;;
+	esac
+done
+
+# Input sanity checks.
+
+# Current operation.
+if [[ ${#} -eq 0 ]]; then
+	print_error 4
+	exit 4
+elif [[ ! ${POSSIBLE_OPERATIONS[*]} =~ (^|[[:space:]])"${1}"($|[[:space:]]) ]]; then
+	print_error 5
+	exit 5
+fi
+CURRENT_OPERATION=${1}
+shift
+if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ "${CURRENT_OPERATION}" ]] && ! ${PROCESS_ALL}; then
+	print_error 6
+	exit 6
+fi
+
+# Root + install/update.
+if [[ ${UID} -eq 0 ]] && [[ " install update " =~ "${CURRENT_OPERATION}" ]]; then
+	print_error 7
+	exit 7
+fi
+
+# Verbosity.
+case ${VERBOSITY} in
+	0) 
+		STDOUT_DESTINATION=/dev/null
+		STDERR_DESTINATION=/dev/null
+		;;
+	1)
+		STDOUT_DESTINATION=/dev/null
+		STDERR_DESTINATION=/dev/stderr
+		;;
+	2)
+		STDOUT_DESTINATION=/dev/stdout
+		STDERR_DESTINATION=/dev/stderr
+		;;
+	*)
+		print_error 9
+		exit 9
+		;;
+esac
+
+TARGET_PACKAGES="${@}"
+if ${PROCESS_ALL}; then
+	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
+fi
+for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
+	${CURRENT_OPERATION}-aur-package "${SELECTED_PACKAGE}" 1> ${STDOUT_DESTINATION} 2> ${STDERR_DESTINATION}
+	ERROR_CODE=${?}
+	case "${ERROR_CODE}" in
+		0 )
+			;;
+		10 | 11 | 12 | 13 | 20 | 21 | 30 | 31 | 40)
+			print_error ${ERROR_CODE}
+			;;
+		* )
+			echo "[-] Uknown error code ${ERROR_CODE} received."
+			exit ${ERROR_CODE}
+			;;
+	esac
+done
+

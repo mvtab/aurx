@@ -1,11 +1,11 @@
-# aur-functions
-.bashrc functions for Archlinux User Repository (AUR) packages.
+# aurx
+Archlinux User Repository eXplorer
 
 ## Installation
 ```bash
-source ./aur-<function>
+source ./aurx-<function>
 # or 
-cat ./aur-<function> >> .bashrc
+cat ./aurx-<function> >> .bashrc
 # or 
 # any other way to use a function in bash.
 ```
