@@ -33,32 +33,6 @@ print_error() {
 	GIVEN_ERROR=${1}
 
 	case "${GIVEN_ERROR}" in
-		1 | 2)
-			echo "[-] getopt not working properly."
-			;;
-		3)
-			echo "[-] Unknown error while parsing options."
-			;;
-		4)
-			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[@]}."
-			;;
-		5)
-			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[@]}."
-			;;
-		6)
-			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
-			;;
-		7)
-			echo "[!] Can't install or update packages as root."
-			;;
-		8)
-			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
-			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, starts_with."
-			;;
-		9)
-			echo "[-] Unknown verbosity level \"${VERBOSITY}\"."
-			echo "[i] Possible options are: 0 - nothing, 1 - stderr, 2 - all"
-			;;
 		10)
 			;;
 		11)
@@ -83,6 +57,35 @@ print_error() {
 			;;
 		40)
 			echo "[!] No search results found for \"${SELECTED_PACKAGE}\"."
+			;;
+		50 | 51)
+			echo "[-] getopt not working properly."
+			;;
+		52)
+			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
+			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, starts_with."
+			;;
+		53)
+			echo "[-] Unknown error while parsing options."
+			;;
+		54)
+			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			;;
+		55)
+			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			;;
+		56)
+			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
+			;;
+		57)
+			echo "[!] Can't install or update packages as root."
+			;;
+		58)
+			echo "[-] Unknown verbosity level \"${VERBOSITY}\"."
+			echo "[i] Possible options are: 0 - nothing, 1 - stderr, 2 - all"
+			;;
+		59)
+			echo "[-] The following required packages are not installed: ${ABSENT_PACKAGES[@]}."
 			;;
 		*)
 			echo "[-] Unknown error occured: ${GIVEN_ERROR}"
@@ -246,8 +249,8 @@ search-aur-package() {
 
 getopt --test 1> /dev/null && true
 if [[ ${?} -ne 4 ]]; then
-	print_error 1
-	exit 1
+	print_error 50
+	exit 50
 fi
 
 # Variables.
@@ -267,8 +270,8 @@ LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existin
 OPTIONS=s:v:fhcCwS:r:aR:
 PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
 if [[ ${?} -ne 0 ]]; then
-	print_error 2
-	exit 2
+	print_error 51
+	exit 51
 fi
 
 eval set -- "${PARSED_OPTIONS}"
@@ -316,8 +319,8 @@ while true; do
 		-S|--search-criteria)
 			SEARCH_CRITERIA="${2}"
 			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends starts_with " =~ "${SEARCH_CRITERIA}" ]]; then
-				print_error 8
-				exit 8
+				print_error 52
+				exit 52
 			fi
 			shift 2
 			;;
@@ -334,8 +337,8 @@ while true; do
 			break
 			;;
 		* )
-			print_error 3
-			exit 3
+			print_error 53
+			exit 53
 			;;
 	esac
 done
@@ -344,23 +347,23 @@ done
 
 # Current operation.
 if [[ ${#} -eq 0 ]]; then
-	print_error 4
-	exit 4
+	print_error 54
+	exit 54
 elif [[ ! ${POSSIBLE_OPERATIONS[*]} =~ (^|[[:space:]])"${1}"($|[[:space:]]) ]]; then
-	print_error 5
-	exit 5
+	print_error 55
+	exit 55
 fi
 CURRENT_OPERATION=${1}
 shift
 if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ "${CURRENT_OPERATION}" ]] && ! ${PROCESS_ALL}; then
-	print_error 6
-	exit 6
+	print_error 56
+	exit 56
 fi
 
 # Root + install/update.
 if [[ ${UID} -eq 0 ]] && [[ " install update " =~ "${CURRENT_OPERATION}" ]]; then
-	print_error 7
-	exit 7
+	print_error 57
+	exit 57
 fi
 
 # Verbosity.
@@ -378,10 +381,32 @@ case ${VERBOSITY} in
 		STDERR_DESTINATION=/dev/stderr
 		;;
 	*)
-		print_error 9
-		exit 9
+		print_error 58
+		exit 58
 		;;
 esac
+
+case ${CURRENT_OPERATION} in
+	install | update )
+		REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
+		;;
+	remove )
+		REQUIRED_PACKAGES=('pacman')
+		;;
+	search )
+		REQUIRED_PACKAGES=('curl' 'jq')
+		;;
+esac		
+ABSENT_PACKAGES=()
+for REQUIRED_PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
+	if [[ ! $(command -v ${REQUIRED_PACKAGE}) ]]; then
+		ABSENT_PACKAGES+=( "${REQUIRED_PACKAGE}" )
+	fi
+done
+if [[ ! -z ${ABSENT_PACKAGES[@]} ]]; then
+	print_error 59
+	exit 59
+fi
 
 TARGET_PACKAGES="${@}"
 if ${PROCESS_ALL}; then
