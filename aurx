@@ -140,15 +140,13 @@ build-makepkg-package() {
 
 remove-from-system() {
 	TARGET_PACKAGE=${1}
-	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) ]]; then
+	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2>/dev/null) ]]; then
 		sudo pacman ${REMOVE_OPTS} ${TARGET_PACKAGE}
-	elif [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) == "error: package \'${TARGET_PACKAGE}\' was not found" ]]; then
-		return 0
 	else
-		return 1
+		return 0
 	fi
 	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) ]]; then
-		return 2
+		return 1
 	fi
 	return 0
 }
@@ -158,7 +156,7 @@ remove-from-package-list() {
 	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
 		sed -i "/^${TARGET_PACKAGE}$/d" ${SOURCE_PATH}/package_list
 	else
-		return 1
+		return 0
 	fi
 	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
 		return 2
