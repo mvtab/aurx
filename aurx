@@ -223,7 +223,7 @@ install-aur-package() {
 remove-aur-package() {
 	TARGET_PACKAGE=${1}
 
-	remove-from-system ${TARGET_PACKAGE} || [[ ${?} -eq 1 ]] || return 20
+	remove-from-system ${TARGET_PACKAGE} || return 20
 
 	remove-from-package-list ${TARGET_PACKAGE} || return 21
 
@@ -415,7 +415,6 @@ if ${PROCESS_ALL}; then
 	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
 fi
 for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
-	# Refresh sudo timestamp for less sudo prompts.
 	${CURRENT_OPERATION}-aur-package "${SELECTED_PACKAGE}" 1> ${STDOUT_DESTINATION} 2> ${STDERR_DESTINATION}
 	ERROR_CODE=${?}
 	case "${ERROR_CODE}" in
