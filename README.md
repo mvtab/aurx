@@ -14,7 +14,7 @@ chmod +111 ./aurx
 The Archlinux User Repository eXplorer.
 usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
-Every optioin can be set through environment variables but the explicit option has the highest priority.
+Every option can be set through environment variables but the explicit option has the highest priority.
 
 Operations:
   install                   Clone packages and install them with makepkg.
