@@ -12,7 +12,9 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: ./aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
+
+Every optioin can be set through environment variables but the explicit option has the highest priority.
 
 Operations:
   install                   Clone packages and install them with makepkg.
@@ -32,5 +34,9 @@ Options:
   -S, --search-criteria     Criteria to use in search queries.
   -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
   -w, --wipe-existing       Wipe eventually existing source.
+
+Environment variables:
+  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_RESULTS_COUNT, AURX_REMOVE_OPTS, 
+  AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 ```
 

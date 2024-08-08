@@ -8,6 +8,8 @@ usage() {
 		The Archlinux User Repository eXplorer.
 		usage: ${0} [OPERATION] [OPTION..] [PACKAGE..] 
 		
+		Every option can be set through environment variables but the explicit option has the highest priority.
+		
 		Operations:
 		  install                   Clone packages and install them with makepkg.
 		  remove                    Remove packages from system and the package_list.
@@ -26,6 +28,10 @@ usage() {
 		  -S, --search-criteria     Criteria to use in search queries.
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
 		  -w, --wipe-existing       Wipe eventually existing source.
+		
+		Environment variables:
+		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_RESULTS_COUNT, AURX_REMOVE_OPTS, 
+		  AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 	EOF
 }
 
@@ -255,14 +261,14 @@ fi
 
 # Variables.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search")
-FORCE_PROCESS=${AURX_FORCE_PROCESS:-false}
+FORCE_PROCESS=${AURX_FORCE:-false}
 VERBOSITY=${AURX_VERBOSITY:-2}
 CLEANUP=${AURX_CLEANUP:-false}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 RESULTS_COUNT=${AURX_RESULTS_COUNT:-20}
-PROCESS_ALL=${AURX_PROCESS_ALL:-false}
+PROCESS_ALL=${AURX_ALL:-false}
 REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
 
 # Options.
