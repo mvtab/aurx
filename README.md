@@ -12,7 +12,7 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: /usr/local/bin/aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
 Every option can be set through environment variables but the explicit option has the highest priority.
 
@@ -44,9 +44,12 @@ search options:
   -r, --search-results      Number of results to display from search queries.
   -S, --search-criteria     Criteria to use in search queries.
 
+completion options:
+  -b, --binary-path         The path of the binary to be used for completion.
+
 Environment variables:
-  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, AURX_REMOVE_OPTS, 
-  AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
+  AURX_ALL, AURX_BINARY_PATH, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
+  AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 ```
 
 ### Completion
