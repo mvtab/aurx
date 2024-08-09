@@ -57,6 +57,6 @@ Environment variables:
 source <(aurx completion bash)
 ```
 
-Only bash completion is currently available. This currently works only with "aurx" executable name.  
+Only bash completion is currently available. You can set the executable to configure for completion with `--binary-path`.
 Be advised package completions are limited by the AUR daily rate limit: 4000 requests per IP per day.
 
