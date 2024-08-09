@@ -120,13 +120,13 @@ print_error() {
 	esac
 }
 
-aurx_completion() {
+aurx-completion() {
 	SHELL_TYPE=${1}
 	case ${SHELL_TYPE} in
 		bash )
 			cat <<- EOS
-				_aurx_completion() {
-					local cur prev
+				_aurx-completion() {
+					local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
 					COMPREPLY=()
 				        POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[@]}"
 				        GENERAL_OPTIONS="${GENERAL_OPTIONS[@]}"
@@ -136,44 +136,43 @@ aurx_completion() {
 				        SEARCH_OPTIONS="${SEARCH_OPTIONS[@]}"
 				        COMPLETION_OPTIONS="${COMPLETION_OPTIONS[@]}"
 				        AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[@]}"
-				        cur="\${COMP_WORDS[COMP_CWORD]}"
 				        
 
-				        if [[ \${cur} == -* ]]; then
-				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${cur}") )
+				        if [[ \${CURRENT_WORD} == -* ]]; then
+				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                if [[ \${COMP_WORDS[@]} =~ " install " ]]; then
-				                        COMPREPLY+=( \$(compgen -W "\${INSTALL_OPTIONS}" -- "\${cur}") )
+				                        COMPREPLY+=( \$(compgen -W "\${INSTALL_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				                elif [[ \${COMP_WORDS[@]} =~ " remove " ]]; then
-				                        COMPREPLY+=( \$(compgen -W "\${REMOVE_OPTIONS}" -- "\${cur}") )
+				                        COMPREPLY+=( \$(compgen -W "\${REMOVE_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				                elif [[ \${COMP_WORDS[@]} =~ " update " ]]; then
-				                        COMPREPLY+=( \$(compgen -W "\${UPDATE_OPTIONS}" -- "\${cur}") )
+				                        COMPREPLY+=( \$(compgen -W "\${UPDATE_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				        	elif [[ \${COMP_WORDS[@]} =~ " search " ]]; then
-				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${cur}") )
+				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				        	elif [[ \${COMP_WORDS[@]} =~ " completion " ]]; then
-				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${cur}") )
+				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				                fi
 				        else
 						if [[ -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${cur}") )
+				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
-						elif [[ \${#cur} -ge 3 ]] && [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " install search " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\$(${0} search --search-criteria suggest \${cur} | jq -r '.[]' | tr '\n' ' ')" -- "\${cur}") )
+						elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\$(${0} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				                        return 0
 						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
-							COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${cur}") )
+							COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				                        return 0
 						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " completion " | tr " " "\n" | sort | uniq -D) ]]; then
-							COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${cur}") )
+							COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
 				                        return 0
 				                fi
 				        fi
 				}
-				complete -F _aurx_completion ${BINARY_PATH}
+				complete -F _aurx-completion ${BINARY_PATH}
 			EOS
 			;;
 	esac
@@ -498,17 +497,6 @@ if ${ALL}; then
 	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
 fi
 
-if [[ ${CURRENT_OPERATION} == "completion" ]]; then
-	COMPLETION_TYPE=${TARGET_PACKAGES[0]}
-	if [[ ${AVAILABLE_COMPLETIONS[@]} =~ ${COMPLETION_TYPE} ]]; then
-		aurx_completion ${COMPLETION_TYPE}
-		exit 0
-	else
-		print_error 62
-		exit 62
-	fi
-fi
-
 case ${CURRENT_OPERATION} in
 	install | update )
 		REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
@@ -516,7 +504,7 @@ case ${CURRENT_OPERATION} in
 	remove )
 		REQUIRED_PACKAGES=('pacman')
 		;;
-	search )
+	search | completion )
 		REQUIRED_PACKAGES=('curl' 'jq')
 		;;
 	* )
@@ -533,6 +521,17 @@ done
 if [[ ! -z ${ABSENT_PACKAGES[@]} ]]; then
 	print_error 59
 	exit 59
+fi
+
+if [[ ${CURRENT_OPERATION} == "completion" ]]; then
+	COMPLETION_TYPE=${TARGET_PACKAGES[0]}
+	if [[ ${AVAILABLE_COMPLETIONS[@]} =~ ${COMPLETION_TYPE} ]]; then
+		aurx-completion ${COMPLETION_TYPE}
+		exit 0
+	else
+		print_error 62
+		exit 62
+	fi
 fi
 
 for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
