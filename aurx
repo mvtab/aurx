@@ -37,10 +37,13 @@ usage() {
 		search options:
 		  -r, --search-results      Number of results to display from search queries.
 		  -S, --search-criteria     Criteria to use in search queries.
+
+		completion options:
+		  -b, --binary-path         The path of the binary to be used for completion.
 		
 		Environment variables:
-		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, AURX_REMOVE_OPTS, 
-		  AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
+		  AURX_ALL, AURX_BINARY_PATH, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
+		  AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 	EOF
 }
 
@@ -131,6 +134,7 @@ aurx_completion() {
 				        REMOVE_OPTIONS="${REMOVE_OPTIONS[@]}"
 				        UPDATE_OPTIONS="${UPDATE_OPTIONS[@]}"
 				        SEARCH_OPTIONS="${SEARCH_OPTIONS[@]}"
+				        COMPLETION_OPTIONS="${COMPLETION_OPTIONS[@]}"
 				        AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[@]}"
 				        cur="\${COMP_WORDS[COMP_CWORD]}"
 				        
@@ -149,6 +153,9 @@ aurx_completion() {
 				        	elif [[ \${COMP_WORDS[@]} =~ " search " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${cur}") )
 				                        return 0
+				        	elif [[ \${COMP_WORDS[@]} =~ " completion " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${cur}") )
+				                        return 0
 				                fi
 				        else
 						if [[ -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
@@ -166,7 +173,7 @@ aurx_completion() {
 				                fi
 				        fi
 				}
-				complete -F _aurx_completion aurx
+				complete -F _aurx_completion ${BINARY_PATH}
 			EOS
 			;;
 	esac
@@ -345,6 +352,8 @@ UPDATE_OPTIONS=()
 UPDATE_VARIABLES=()
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
 SEARCH_VARIABLES=("SEARCH_RESULTS" "SEARCH_CRITERIA")
+COMPLETION_OPTIONS=("-b" "--binary-path")
+COMPLETION_VARIABLES=("BINARY_PATH")
 AVAILABLE_COMPLETIONS=("bash")
 
 # Variables.
@@ -357,10 +366,11 @@ SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 ALL=${AURX_ALL:-false}
 REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
+BINARY_PATH=${AURX_BINARY_PATH:-aurx}
 
 # Options.
-LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:
-OPTIONS=s:v:fhcCwS:r:aR:
+LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,binary-path:
+OPTIONS=s:v:fhcCwS:r:aR:b
 PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
 if [[ ${?} -ne 0 ]]; then
 	print_error 51
@@ -381,6 +391,10 @@ while true; do
 			ALL=true
 			shift
 			;;
+		-b|--binary-path )
+			BINARY_PATH="${2}"
+			shift 2
+			;;
 		-c|--cleanup )
 			CLEANUP=true
 			shift
@@ -398,7 +412,7 @@ while true; do
 			exit 0
 			;;
 		-r|--search-results )
-			SEARCH_RESULTS=${2}
+			SEARCH_RESULTS="${2}"
 			shift 2
 			;;
 		-R|--remove-opts )
