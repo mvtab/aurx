@@ -15,22 +15,31 @@ usage() {
 		  remove                    Remove packages from system and the package_list.
 		  update                    Update packages by comparing their installed version with the latest.
 		  search                    Query the AUR repository with specific criterias and keywords.
+		  completion                Generate completion for the specified shell.
 		
-		Options:
+		General options:
 		  -a, --all                 Include all packages from the package_list.
-		  -c, --cleanup             Delete sources after successful installs.
-		  -C, --clean-operation     Delete sources after unsucessful installs.
 		  -f, --force               Forces the current process, where appliable.
 		  -h, --help                Display this information and exit.
-		  -r, --results-count       Number of results to display from search queries.
-		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
 		  -s, --source-path         Work directory for builds and persistent information.
-		  -S, --search-criteria     Criteria to use in search queries.
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
+		
+		install options:
+		  -c, --cleanup             Delete sources after successful installs.
+		  -C, --clean-operation     Delete sources after unsucessful installs.
 		  -w, --wipe-existing       Wipe eventually existing source.
+
+		remove options:
+		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
+
+		update options:
+
+		search options:
+		  -r, --search-results      Number of results to display from search queries.
+		  -S, --search-criteria     Criteria to use in search queries.
 		
 		Environment variables:
-		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_RESULTS_COUNT, AURX_REMOVE_OPTS, 
+		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, AURX_REMOVE_OPTS, 
 		  AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 	EOF
 }
@@ -69,7 +78,7 @@ print_error() {
 			;;
 		52)
 			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
-			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, starts_with."
+			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, suggest."
 			;;
 		53)
 			echo "[-] Unknown error while parsing options."
@@ -93,8 +102,73 @@ print_error() {
 		59)
 			echo "[-] The following required packages are not installed: ${ABSENT_PACKAGES[@]}."
 			;;
+		60)
+			echo "[-] Shell type \"${SHELL_TYPE}\" is not supported."
+			;;
+		61)
+			echo "[-] Uknown error code ${ERROR_CODE} received."
+			;;
+		62)
+			echo "[-] Completion for \"${COMPLETION_TYPE}\" is not available."
+			;;
 		*)
-			echo "[-] Unknown error occured: ${GIVEN_ERROR}"
+			echo "[-] No error message found for error ${GIVEN_ERROR}."
+			;;
+	esac
+}
+
+aurx_completion() {
+	SHELL_TYPE=${1}
+	case ${SHELL_TYPE} in
+		bash )
+			cat <<- EOS
+				_aurx_completion() {
+					local cur prev
+					COMPREPLY=()
+				        POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[@]}"
+				        GENERAL_OPTIONS="${GENERAL_OPTIONS[@]}"
+				        INSTALL_OPTIONS="${INSTALL_OPTIONS[@]}"
+				        REMOVE_OPTIONS="${REMOVE_OPTIONS[@]}"
+				        UPDATE_OPTIONS="${UPDATE_OPTIONS[@]}"
+				        SEARCH_OPTIONS="${SEARCH_OPTIONS[@]}"
+				        AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[@]}"
+				        cur="\${COMP_WORDS[COMP_CWORD]}"
+				        
+
+				        if [[ \${cur} == -* ]]; then
+				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${cur}") )
+				                if [[ \${COMP_WORDS[@]} =~ " install " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${INSTALL_OPTIONS}" -- "\${cur}") )
+				                        return 0
+				                elif [[ \${COMP_WORDS[@]} =~ " remove " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${REMOVE_OPTIONS}" -- "\${cur}") )
+				                        return 0
+				                elif [[ \${COMP_WORDS[@]} =~ " update " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${UPDATE_OPTIONS}" -- "\${cur}") )
+				                        return 0
+				        	elif [[ \${COMP_WORDS[@]} =~ " search " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${cur}") )
+				                        return 0
+				                fi
+				        else
+						if [[ -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${cur}") )
+				                        return 0
+						elif [[ \${#cur} -ge 3 ]] && [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\$(${0} search --search-criteria suggest \${cur} | jq -r '.[]' | tr '\n' ' ')" -- "\${cur}") )
+				                        return 0
+						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
+							COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${cur}") )
+				                        return 0
+						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " completion " | tr " " "\n" | sort | uniq -D) ]]; then
+							COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${cur}") )
+				                        return 0
+				                fi
+				        fi
+				}
+				complete -F _aurx_completion ${0}
+			EOS
+			;;
 	esac
 }
 
@@ -188,16 +262,16 @@ search-by-criteria() {
 		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends)
 			local RESULTS=$(curl \
 				https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA} 2> /dev/null \
-				| jq -r ".results[:${RESULTS_COUNT}]" \
+				| jq -r ".results[:${SEARCH_RESULTS}]" \
 				| jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
 			if [[ -z "${RESULTS}" ]]; then
 				return 1
 			fi
 			;;
-		starts_with)
+		suggest)
 			local RESULTS=$(curl \
 				https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD} 2> /dev/null \
-				| jq -r ".[:${RESULTS_COUNT}]")
+				| jq -r ".[:${SEARCH_RESULTS}]")
 			if [[ -z "${RESULTS}" ]]; then
 				return 2
 			fi
@@ -213,7 +287,7 @@ search-by-criteria() {
 install-aur-package() {
 	TARGET_PACKAGE=${1}
 	
-	compare-versions ${TARGET_PACKAGE} || ${FORCE_PROCESS} ||  return 10
+	compare-versions ${TARGET_PACKAGE} || ${FORCE} ||  return 10
 
 	clone-git-repo ${TARGET_PACKAGE} || return 11
 
@@ -259,20 +333,33 @@ if [[ ${?} -ne 4 ]]; then
 	exit 50
 fi
 
+# Metadata.
+POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
+GENERAL_VARIABLES=("ALL" "FORCE" "SOURCE_PATH" "VERBOSITY")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-w" "--wipe-existing")
+INSTALL_VARIABLES=("CLEANUP" "CLEAN_OPERATION" "WIPE_EXISTING")
+REMOVE_OPTIONS=("-R" "--remove-opts")
+REMOVE_VARIABLES=("REMOVE_OPTS")
+UPDATE_OPTIONS=()
+UPDATE_VARIABLES=()
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
+SEARCH_VARIABLES=("SEARCH_RESULTS" "SEARCH_CRITERIA")
+AVAILABLE_COMPLETIONS=("bash")
+
 # Variables.
-POSSIBLE_OPERATIONS=("install" "remove" "update" "search")
-FORCE_PROCESS=${AURX_FORCE:-false}
+FORCE=${AURX_FORCE:-false}
 VERBOSITY=${AURX_VERBOSITY:-2}
 CLEANUP=${AURX_CLEANUP:-false}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
-RESULTS_COUNT=${AURX_RESULTS_COUNT:-20}
-PROCESS_ALL=${AURX_ALL:-false}
+SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
+ALL=${AURX_ALL:-false}
 REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
 
 # Options.
-LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,results-count:,all,remove-opts:
+LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:
 OPTIONS=s:v:fhcCwS:r:aR:
 PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
 if [[ ${?} -ne 0 ]]; then
@@ -291,7 +378,7 @@ fi
 while true; do
 	case "${1}" in
 		-a|--all )
-			PROCESS_ALL=true
+			ALL=true
 			shift
 			;;
 		-c|--cleanup )
@@ -303,15 +390,15 @@ while true; do
 			shift
 			;;
 		-f|--force )
-			FORCE_PROCESS=true
+			FORCE=true
 			shift
 			;;
 		-h|--help )
 			usage
 			exit 0
 			;;
-		-r|--results-count )
-			RESULTS_COUNT=${2}
+		-r|--search-results )
+			SEARCH_RESULTS=${2}
 			shift 2
 			;;
 		-R|--remove-opts )
@@ -324,7 +411,7 @@ while true; do
 			;;
 		-S|--search-criteria)
 			SEARCH_CRITERIA="${2}"
-			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends starts_with " =~ "${SEARCH_CRITERIA}" ]]; then
+			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends suggest " =~ "${SEARCH_CRITERIA}" ]]; then
 				print_error 52
 				exit 52
 			fi
@@ -361,7 +448,7 @@ elif [[ ! ${POSSIBLE_OPERATIONS[*]} =~ (^|[[:space:]])"${1}"($|[[:space:]]) ]]; 
 fi
 CURRENT_OPERATION=${1}
 shift
-if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ "${CURRENT_OPERATION}" ]] && ! ${PROCESS_ALL}; then
+if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ "${CURRENT_OPERATION}" ]] && ! ${ALL}; then
 	print_error 56
 	exit 56
 fi
@@ -392,6 +479,22 @@ case ${VERBOSITY} in
 		;;
 esac
 
+TARGET_PACKAGES="${@}"
+if ${ALL}; then
+	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
+fi
+
+if [[ ${CURRENT_OPERATION} == "completion" ]]; then
+	COMPLETION_TYPE=${TARGET_PACKAGES[0]}
+	if [[ ${AVAILABLE_COMPLETIONS[@]} =~ ${COMPLETION_TYPE} ]]; then
+		aurx_completion ${COMPLETION_TYPE}
+		exit 0
+	else
+		print_error 62
+		exit 62
+	fi
+fi
+
 case ${CURRENT_OPERATION} in
 	install | update )
 		REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
@@ -401,6 +504,10 @@ case ${CURRENT_OPERATION} in
 		;;
 	search )
 		REQUIRED_PACKAGES=('curl' 'jq')
+		;;
+	* )
+		print_error 55
+		exit 55
 		;;
 esac		
 ABSENT_PACKAGES=()
@@ -414,10 +521,6 @@ if [[ ! -z ${ABSENT_PACKAGES[@]} ]]; then
 	exit 59
 fi
 
-TARGET_PACKAGES="${@}"
-if ${PROCESS_ALL}; then
-	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
-fi
 for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
 	${CURRENT_OPERATION}-aur-package "${SELECTED_PACKAGE}" 1> ${STDOUT_DESTINATION} 2> ${STDERR_DESTINATION}
 	ERROR_CODE=${?}
@@ -428,7 +531,7 @@ for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
 			print_error ${ERROR_CODE}
 			;;
 		* )
-			echo "[-] Uknown error code ${ERROR_CODE} received."
+			print_error 61
 			exit ${ERROR_CODE}
 			;;
 	esac
