@@ -12,7 +12,7 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: ./aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
 Every option can be set through environment variables but the explicit option has the highest priority.
 
@@ -54,6 +54,6 @@ Environment variables:
 source <(aurx completion bash)
 ```
 
-Only bash completion is currently available.
+Only bash completion is currently available. This currently works only with "aurx" executable name. 
 Be advised package completions are limited by the AUR daily rate limit: 4000 requests per IP per day.
 

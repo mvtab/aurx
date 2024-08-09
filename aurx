@@ -166,7 +166,7 @@ aurx_completion() {
 				                fi
 				        fi
 				}
-				complete -F _aurx_completion ${0}
+				complete -F _aurx_completion aurx
 			EOS
 			;;
 	esac
