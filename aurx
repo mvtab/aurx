@@ -40,7 +40,7 @@ usage() {
 		  -S, --search-criteria     Criteria to use in search queries.
 
 		  completion:
-		  -e, --executable-name         The path of the binary to be used for completion.
+		  -e, --executable-name     The path of the binary to be used for completion.
 		
 		Environment variables:
 		  AURX_ALL, AURX_EXECUTABLE_NAME, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
