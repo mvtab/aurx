@@ -17,32 +17,33 @@ usage() {
 		  search                    Query the AUR repository with specific criterias and keywords.
 		  completion                Generate completion for the specified shell.
 		
-		General options:
+		Options:
+		  general:
 		  -a, --all                 Include all packages from the package_list.
 		  -f, --force               Forces the current process, where appliable.
 		  -h, --help                Display this information and exit.
 		  -s, --source-path         Work directory for builds and persistent information.
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
 		
-		install options:
+		  install:
 		  -c, --cleanup             Delete sources after successful installs.
 		  -C, --clean-operation     Delete sources after unsucessful installs.
 		  -w, --wipe-existing       Wipe eventually existing source.
 
-		remove options:
+		  remove:
 		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
 
-		update options:
+		  update:
 
-		search options:
+		  search:
 		  -r, --search-results      Number of results to display from search queries.
 		  -S, --search-criteria     Criteria to use in search queries.
 
-		completion options:
-		  -b, --binary-path         The path of the binary to be used for completion.
+		  completion:
+		  -e, --executable-name         The path of the binary to be used for completion.
 		
 		Environment variables:
-		  AURX_ALL, AURX_BINARY_PATH, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
+		  AURX_ALL, AURX_EXECUTABLE_NAME, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
 		  AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 	EOF
 }
@@ -137,42 +138,41 @@ aurx-completion() {
 				        COMPLETION_OPTIONS="${COMPLETION_OPTIONS[@]}"
 				        AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[@]}"
 				        
-
 				        if [[ \${CURRENT_WORD} == -* ]]; then
 				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                if [[ \${COMP_WORDS[@]} =~ " install " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${INSTALL_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
 				                elif [[ \${COMP_WORDS[@]} =~ " remove " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${REMOVE_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
 				                elif [[ \${COMP_WORDS[@]} =~ " update " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${UPDATE_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
 				        	elif [[ \${COMP_WORDS[@]} =~ " search " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
 				        	elif [[ \${COMP_WORDS[@]} =~ " completion " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
 				                fi
 				        else
-						if [[ -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
+				                if [[ -z \$(echo \${COMP_WORDS[@]} \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
-						elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " install search " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\$(${0} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                        return 0
-						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
-							COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                        return 0
-						elif [[ ! -z \$(echo \$(echo \${COMP_WORDS[@]} | uniq) " completion " | tr " " "\n" | sort | uniq -D) ]]; then
-							COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
-				                        return 0
+				                elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[@]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				                elif [[ ! -z \$(echo \${COMP_WORDS[@]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				                elif [[ ! -z \$(echo \${COMP_WORDS[@]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
 				                fi
 				        fi
+
+				        for PLANNED_REPLY in \${COMPREPLY[@]}; do
+				                if [[ \${COMP_WORDS[@]} =~ " \${PLANNED_REPLY} " ]]; then
+				                        TEMP_COMPREPLY=\${COMPREPLY[@]}
+				                        COMPREPLY=( \${TEMP_COMPREPLY//"\${PLANNED_REPLY}"/} )
+				                fi
+				        done
+				        
+				        return 0
 				}
-				complete -F _aurx-completion ${BINARY_PATH}
+				complete -F _aurx-completion ${EXECUTABLE_NAME}
 			EOS
 			;;
 	esac
@@ -351,8 +351,8 @@ UPDATE_OPTIONS=()
 UPDATE_VARIABLES=()
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
 SEARCH_VARIABLES=("SEARCH_RESULTS" "SEARCH_CRITERIA")
-COMPLETION_OPTIONS=("-b" "--binary-path")
-COMPLETION_VARIABLES=("BINARY_PATH")
+COMPLETION_OPTIONS=("-e" "--executable-name")
+COMPLETION_VARIABLES=("EXECUTABLE_NAME")
 AVAILABLE_COMPLETIONS=("bash")
 
 # Variables.
@@ -365,11 +365,11 @@ SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 ALL=${AURX_ALL:-false}
 REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
-BINARY_PATH=${AURX_BINARY_PATH:-aurx}
+EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
 
 # Options.
-LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,binary-path:
-OPTIONS=s:v:fhcCwS:r:aR:b
+LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:
+OPTIONS=s:v:fhcCwS:r:aR:e
 PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
 if [[ ${?} -ne 0 ]]; then
 	print_error 51
@@ -390,10 +390,6 @@ while true; do
 			ALL=true
 			shift
 			;;
-		-b|--binary-path )
-			BINARY_PATH="${2}"
-			shift 2
-			;;
 		-c|--cleanup )
 			CLEANUP=true
 			shift
@@ -401,6 +397,10 @@ while true; do
 		-C|--clean-operation )
 			CLEAN_OPERATION=true
 			shift
+			;;
+		-e|--executable-name )
+			EXECUTABLE_NAME="${2}"
+			shift 2
 			;;
 		-f|--force )
 			FORCE=true

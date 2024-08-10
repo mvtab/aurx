@@ -12,7 +12,7 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: /usr/local/bin/aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
 Every option can be set through environment variables but the explicit option has the highest priority.
 
@@ -23,32 +23,33 @@ Operations:
   search                    Query the AUR repository with specific criterias and keywords.
   completion                Generate completion for the specified shell.
 
-General options:
+Options:
+  general:
   -a, --all                 Include all packages from the package_list.
   -f, --force               Forces the current process, where appliable.
   -h, --help                Display this information and exit.
   -s, --source-path         Work directory for builds and persistent information.
   -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
 
-install options:
+  install:
   -c, --cleanup             Delete sources after successful installs.
   -C, --clean-operation     Delete sources after unsucessful installs.
   -w, --wipe-existing       Wipe eventually existing source.
 
-remove options:
+  remove:
   -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
 
-update options:
+  update:
 
-search options:
+  search:
   -r, --search-results      Number of results to display from search queries.
   -S, --search-criteria     Criteria to use in search queries.
 
-completion options:
-  -b, --binary-path         The path of the binary to be used for completion.
+  completion:
+  -e, --executable-name     The name of the executable to be used for completion.
 
 Environment variables:
-  AURX_ALL, AURX_BINARY_PATH, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
+  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
   AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 ```
 
@@ -58,7 +59,7 @@ source <(aurx completion bash)
 ```
 
 Only bash completion is currently available.  
-You can set the executable to configure for completion with `--binary-path`.  
+You can set the executable to configure for completion with `--executable-name`.  
 
 Be advised package completions are limited by the AUR daily rate limit: 4000 requests per IP per day.
 
