@@ -12,7 +12,7 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: ./aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
 Every option can be set through environment variables but the explicit option has the highest priority.
 
@@ -31,15 +31,13 @@ Options:
   -s, --source-path         Work directory for builds and persistent information.
   -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
 
-  install:
+  install, update:
   -c, --cleanup             Delete sources after successful installs.
   -C, --clean-operation     Delete sources after unsucessful installs.
   -w, --wipe-existing       Wipe eventually existing source.
 
   remove:
   -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
-
-  update:
 
   search:
   -r, --search-results      Number of results to display from search queries.
@@ -49,7 +47,7 @@ Options:
   -e, --executable-name     The name of the executable to be used for completion.
 
 Environment variables:
-  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
+  AURX_ALL, AURX_EXECUTABLE_NAME, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
   AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 ```
 

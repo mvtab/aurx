@@ -25,15 +25,13 @@ usage() {
 		  -s, --source-path         Work directory for builds and persistent information.
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
 		
-		  install:
+		  install, update:
 		  -c, --cleanup             Delete sources after successful installs.
 		  -C, --clean-operation     Delete sources after unsucessful installs.
 		  -w, --wipe-existing       Wipe eventually existing source.
 
 		  remove:
 		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
-
-		  update:
 
 		  search:
 		  -r, --search-results      Number of results to display from search queries.
@@ -347,8 +345,8 @@ INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-w" "--wipe-existing
 INSTALL_VARIABLES=("CLEANUP" "CLEAN_OPERATION" "WIPE_EXISTING")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 REMOVE_VARIABLES=("REMOVE_OPTS")
-UPDATE_OPTIONS=()
-UPDATE_VARIABLES=()
+UPDATE_OPTIONS=( "${INSTALL_OPTIONS[@]}" )
+UPDATE_VARIABLES=( "${INSTALL_VARIABLES[@]}" )
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
 SEARCH_VARIABLES=("SEARCH_RESULTS" "SEARCH_CRITERIA")
 COMPLETION_OPTIONS=("-e" "--executable-name")
