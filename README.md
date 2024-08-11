@@ -12,7 +12,7 @@ chmod +111 ./aurx
 ## Configuration and usage
 ```bash
 The Archlinux User Repository eXplorer.
-usage: ./aurx [OPERATION] [OPTION..] [PACKAGE..] 
+usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
 Every option can be set through environment variables but the explicit option has the highest priority.
 
@@ -47,7 +47,7 @@ Options:
   -e, --executable-name     The name of the executable to be used for completion.
 
 Environment variables:
-  AURX_ALL, AURX_EXECUTABLE_NAME, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_FORCE, AURX_SEARCH_RESULTS, 
+  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
   AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
 ```
 
