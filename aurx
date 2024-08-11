@@ -5,9 +5,9 @@ set -o pipefail -o noclobber -o nounset
 
 usage() {
 	cat <<- EOF
-		The Archlinux User Repository eXplorer.
 		usage: ${EXECUTABLE_NAME} [OPERATION] [OPTION..] [PACKAGE..] 
 		
+		The Archlinux User Repository eXplorer.
 		Every option can be set through environment variables but the explicit option has the highest priority.
 		
 		Operations:

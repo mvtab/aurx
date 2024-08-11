@@ -11,9 +11,9 @@ chmod +111 ./aurx
 
 ## Configuration and usage
 ```bash
-The Archlinux User Repository eXplorer.
 usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
 
+The Archlinux User Repository eXplorer.
 Every option can be set through environment variables but the explicit option has the highest priority.
 
 Operations:
