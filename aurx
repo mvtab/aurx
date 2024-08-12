@@ -315,8 +315,6 @@ remove-aur-package() {
 update-aur-package() {
 	TARGET_PACKAGE=${1}
 
-	compare-versions ${TARGET_PACKAGE} || return 30
-
 	install-aur-package ${TARGET_PACKAGE} || return 31
 	
 	return 0
