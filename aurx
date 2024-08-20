@@ -365,7 +365,7 @@ EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
 
 # Options.
 LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:
-OPTIONS=s:v:fhcCwS:r:aR:e
+OPTIONS=s:v:fhcCwS:r:aR:e:
 PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
 if [[ ${?} -ne 0 ]]; then
 	print_error 51
