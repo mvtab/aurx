@@ -183,7 +183,7 @@ compare-versions() {
 		| jq -r .results.[0].Version)
 	local INSTALLED_VERSION=$(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null \
 		| grep -e "Version" | awk '{ print $3 }')
-	if [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]]; then
+	if [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]] && ! ${FORCE}; then
 		return 1
 	fi
 	return 0
@@ -291,7 +291,7 @@ search-by-criteria() {
 install-aur-package() {
 	TARGET_PACKAGE=${1}
 	
-	compare-versions ${TARGET_PACKAGE} || ${FORCE} ||  return 10
+	compare-versions ${TARGET_PACKAGE} || return 0
 
 	clone-git-repo ${TARGET_PACKAGE} || return 11
 
