@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Catch more kinds of errors.
-set -o pipefail -o noclobber -o nounset
-
 usage() {
 	cat <<- EOF
 		usage: ${EXECUTABLE_NAME} [OPERATION] [OPTION..] [PACKAGE..] 
@@ -19,26 +16,26 @@ usage() {
 		
 		Options:
 		  general:
-		  -a, --all                 Include all packages from the package_list.
-		  -f, --force               Forces the current process, where appliable.
+		  -a, --all                 Include all packages from the package_list. (False)
+		  -f, --force               Forces the current process, where appliable. (False)
 		  -h, --help                Display this information and exit.
-		  -s, --source-path         Work directory for builds and persistent information.
-		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
+		  -s, --source-path         Work directory for builds and persistent information.(\${HOME}/.src)
+		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
 		
 		  install, update:
-		  -c, --cleanup             Delete sources after successful installs.
-		  -C, --clean-operation     Delete sources after unsucessful installs.
-		  -w, --wipe-existing       Wipe eventually existing source.
+		  -c, --cleanup             Delete sources after successful installs. (True)
+		  -C, --clean-operation     Delete sources after unsucessful installs. (False)
+		  -w, --wipe-existing       Wipe eventually existing source. (False)
 
 		  remove:
-		  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
+		  -R, --remove-opts         Opts to give in to pacman for removing package. ('-R')
 
 		  search:
-		  -r, --search-results      Number of results to display from search queries.
-		  -S, --search-criteria     Criteria to use in search queries.
+		  -r, --search-results      Number of results to display from search queries. (20)
+		  -S, --search-criteria     Criteria to use in search queries. ("name")
 
 		  completion:
-		  -e, --executable-name     The name of the executable to be used for completion.
+		  -e, --executable-name     The name of the executable to be used for completion. ("aurx")
 		
 		Environment variables:
 		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
@@ -47,7 +44,7 @@ usage() {
 }
 
 print_error() {
-	GIVEN_ERROR=${1}
+	local GIVEN_ERROR=${1}
 
 	case "${GIVEN_ERROR}" in
 		10)
@@ -86,10 +83,10 @@ print_error() {
 			echo "[-] Unknown error while parsing options."
 			;;
 		54)
-			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
 		55)
-			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[@]}."
+			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
 		56)
 			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
@@ -102,7 +99,7 @@ print_error() {
 			echo "[i] Possible options are: 0 - nothing, 1 - stderr, 2 - all"
 			;;
 		59)
-			echo "[-] The following required packages are not installed: ${ABSENT_PACKAGES[@]}."
+			echo "[-] The following required packages are not installed: ${ABSENT_PACKAGES[*]}."
 			;;
 		60)
 			echo "[-] Shell type \"${SHELL_TYPE}\" is not supported."
@@ -113,6 +110,12 @@ print_error() {
 		62)
 			echo "[-] Completion for \"${COMPLETION_TYPE}\" is not available."
 			;;
+		63)
+			echo "[-] pushd failed at \"${PWD}\"."
+			;;
+		64)
+			echo "[-] popd failed at \"${PWD}\"."
+			;;
 		*)
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
 			;;
@@ -120,50 +123,50 @@ print_error() {
 }
 
 aurx-completion() {
-	SHELL_TYPE=${1}
-	case ${SHELL_TYPE} in
+	local SHELL_TYPE="${1}"
+	case "${SHELL_TYPE}" in
 		bash )
 			cat <<- EOS
 				_aurx-completion() {
 					local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
 					COMPREPLY=()
-				        POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[@]}"
-				        GENERAL_OPTIONS="${GENERAL_OPTIONS[@]}"
-				        INSTALL_OPTIONS="${INSTALL_OPTIONS[@]}"
-				        REMOVE_OPTIONS="${REMOVE_OPTIONS[@]}"
-				        UPDATE_OPTIONS="${UPDATE_OPTIONS[@]}"
-				        SEARCH_OPTIONS="${SEARCH_OPTIONS[@]}"
-				        COMPLETION_OPTIONS="${COMPLETION_OPTIONS[@]}"
-				        AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[@]}"
+				        local POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[*]}"
+				        local GENERAL_OPTIONS="${GENERAL_OPTIONS[*]}"
+				        local INSTALL_OPTIONS="${INSTALL_OPTIONS[*]}"
+				        local REMOVE_OPTIONS="${REMOVE_OPTIONS[*]}"
+				        local UPDATE_OPTIONS="${UPDATE_OPTIONS[*]}"
+				        local SEARCH_OPTIONS="${SEARCH_OPTIONS[*]}"
+				        local COMPLETION_OPTIONS="${COMPLETION_OPTIONS[*]}"
+				        local AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[*]}"
 				        
 				        if [[ \${CURRENT_WORD} == -* ]]; then
 				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                if [[ \${COMP_WORDS[@]} =~ " install " ]]; then
+				                if [[ \${COMP_WORDS[*]} =~ " install " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${INSTALL_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                elif [[ \${COMP_WORDS[@]} =~ " remove " ]]; then
+				                elif [[ \${COMP_WORDS[*]} =~ " remove " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${REMOVE_OPTIONS}" -- "\${CURRENT_WORD}") )
-				                elif [[ \${COMP_WORDS[@]} =~ " update " ]]; then
+				                elif [[ \${COMP_WORDS[*]} =~ " update " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${UPDATE_OPTIONS}" -- "\${CURRENT_WORD}") )
-				        	elif [[ \${COMP_WORDS[@]} =~ " search " ]]; then
+				        	elif [[ \${COMP_WORDS[*]} =~ " search " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${CURRENT_WORD}") )
-				        	elif [[ \${COMP_WORDS[@]} =~ " completion " ]]; then
+				        	elif [[ \${COMP_WORDS[*]} =~ " completion " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                fi
 				        else
-				                if [[ -z \$(echo \${COMP_WORDS[@]} \${POSSIBLE_OPERATIONS[@]} | tr " " "\n" | sort | uniq -D) ]]; then
+				                if [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
-				                elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[@]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				                elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
 				                        COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                elif [[ ! -z \$(echo \${COMP_WORDS[@]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                elif [[ ! -z \$(echo \${COMP_WORDS[@]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
+				                elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
+				                        COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH:?Source path not defined.}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				                elif [[ ! -z \$(echo \${COMP_WORDS[*]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
 				                        COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
 				                fi
 				        fi
 
-				        for PLANNED_REPLY in \${COMPREPLY[@]}; do
-				                if [[ \${COMP_WORDS[@]} =~ " \${PLANNED_REPLY} " ]]; then
-				                        TEMP_COMPREPLY=\${COMPREPLY[@]}
+				        for PLANNED_REPLY in \${COMPREPLY[*]}; do
+				                if [[ \${COMP_WORDS[*]} =~ " \${PLANNED_REPLY} " ]]; then
+				                        TEMP_COMPREPLY=\${COMPREPLY[*]}
 				                        COMPREPLY=( \${TEMP_COMPREPLY//"\${PLANNED_REPLY}"/} )
 				                fi
 				        done
@@ -177,95 +180,115 @@ aurx-completion() {
 }
 
 compare-versions() {
-	TARGET_PACKAGE=${1}
-	local LATEST_VERSION=$(curl \
-		https://aur.archlinux.org/rpc/v5/info?arg[]=${TARGET_PACKAGE} 2> /dev/null \
+	local TARGET_PACKAGE="${1}"
+	local LATEST_VERSION
+	LATEST_VERSION=$(curl \
+		"https://aur.archlinux.org/rpc/v5/info?arg[]=${TARGET_PACKAGE}" 2> /dev/null \
 		| jq -r .results.[0].Version)
-	local INSTALLED_VERSION=$(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null \
+	local INSTALLED_VERSION
+	INSTALLED_VERSION=$(sudo pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null \
 		| grep -e "Version" | awk '{ print $3 }')
-	if [[ ${LATEST_VERSION} == ${INSTALLED_VERSION} ]] && ! ${FORCE}; then
+	if [[ "${LATEST_VERSION}" == "${INSTALLED_VERSION}" ]] && ! ${FORCE}; then
 		return 1
 	fi
 	return 0
 }
 
 clone-git-repo() {
-	TARGET_PACKAGE=${1}
-	if [[ -d ${SOURCE_PATH}/${TARGET_PACKAGE} ]] && ${WIPE_EXISTING}; then
-		rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+	local TARGET_PACKAGE="${1}"
+	if [[ -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]] && ${WIPE_EXISTING}; then
+		rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
 	fi
-	pushd ${SOURCE_PATH} 1> /dev/null
-	git clone https://aur.archlinux.org/${TARGET_PACKAGE}.git 2> /dev/null
-	if [[ -z $(ls ${SOURCE_PATH}/${TARGET_PACKAGE}) ]]; then
-		popd 1> /dev/null
+	if ! pushd "${SOURCE_PATH:?Source path not defined.}" 1> /dev/null; then
+		print_error 63
+		exit 63
+	fi
+	git clone "https://aur.archlinux.org/${TARGET_PACKAGE}.git" 2> /dev/null
+	if [[ -z $(ls "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}") ]]; then
+		if ! popd 1> /dev/null; then
+			print_error 64
+			exit 64
+		fi
 		return 1
 	fi
-	popd 1> /dev/null
+	if ! popd 1> /dev/null; then
+		print_error 64
+		exit 64
+	fi
 	return 0
 }
 
 build-makepkg-package() {
-	TARGET_PACKAGE=${1}
-	pushd ${SOURCE_PATH}/${TARGET_PACKAGE} 1> /dev/null
-	makepkg -sirc
-	if [[ ${?} -ne 0 ]]; then
-		popd 1> /dev/null
+	local TARGET_PACKAGE="${1}"
+	if ! pushd "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" 1> /dev/null; then
+		print_error 63
+		exit 63
+	fi
+	if ! makepkg -sirc; then
+		if ! popd 1> /dev/null; then
+			print_error 64
+			exit 64
+		fi
 		if ${CLEAN_OPERATION}; then
-			rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
 		fi
 		return 1
 	fi
-	popd 1> /dev/null
+	if ! popd 1> /dev/null; then
+		print_error 64
+		exit 64
+	fi
 
 	if ${CLEANUP}; then
-		rm -rf ${SOURCE_PATH}/${TARGET_PACKAGE}
+		rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
 	fi
 }
 
 remove-from-system() {
-	TARGET_PACKAGE=${1}
-	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2>/dev/null) ]]; then
-		sudo pacman ${REMOVE_OPTS} ${TARGET_PACKAGE}
+	local TARGET_PACKAGE="${1}"
+	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2>/dev/null) ]]; then
+		sudo pacman "${REMOVE_OPTS}" "${TARGET_PACKAGE}"
 	else
 		return 0
 	fi
-	if [[ $(sudo pacman -Qi ${TARGET_PACKAGE} 2> /dev/null) ]]; then
+	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null) ]]; then
 		return 1
 	fi
 	return 0
 }
 
 remove-from-package-list() {
-	TARGET_PACKAGE=${1}
-	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
-		sed -i "/^${TARGET_PACKAGE}$/d" ${SOURCE_PATH}/package_list
+	local TARGET_PACKAGE="${1}"
+	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+		sed -i "/^${TARGET_PACKAGE}$/d" "${SOURCE_PATH:?Source path not defined.}"/package_list
 	else
 		return 0
 	fi
-	if [[ $(grep -e "^${TARGET_PACKAGE}$" ${SOURCE_PATH}/package_list) ]]; then
+	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
 		return 2
 	fi
 	return 0
 }
 
 write-package-list() {
-	TARGET_PACKAGE=${1}
-	if [[ ! $(grep -e "${TARGET_PACKAGE}" ${SOURCE_PATH}/package_list) ]]; then
-		echo ${TARGET_PACKAGE} | tee -a ${SOURCE_PATH}/package_list 1> /dev/null
+	local TARGET_PACKAGE="${1}"
+	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+		echo "${TARGET_PACKAGE}" | tee -a "${SOURCE_PATH:?Source path not defined.}"/package_list 1> /dev/null
 	fi
-	if [[ ! $(grep -e "${TARGET_PACKAGE}" ${SOURCE_PATH}/package_list) ]]; then
+	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
 		return 1
 	fi
 	return 0
 }
 
 search-by-criteria() {
-	SEARCH_CRITERIA=${1}
-	TARGET_KEYWORD=${2}
+	local SEARCH_CRITERIA="${1}"
+	local TARGET_KEYWORD="${2}"
 	case "${SEARCH_CRITERIA}" in
 		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends)
-			local RESULTS=$(curl \
-				https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA} 2> /dev/null \
+			local RESULTS
+			RESULTS=$(curl \
+				"https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" 2> /dev/null \
 				| jq -r ".results[:${SEARCH_RESULTS}]" \
 				| jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
 			if [[ -z "${RESULTS}" ]]; then
@@ -273,8 +296,9 @@ search-by-criteria() {
 			fi
 			;;
 		suggest)
-			local RESULTS=$(curl \
-				https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD} 2> /dev/null \
+			local RESULTS
+			RESULTS=$(curl \
+				"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null \
 				| jq -r ".[:${SEARCH_RESULTS}]")
 			if [[ -z "${RESULTS}" ]]; then
 				return 2
@@ -289,41 +313,41 @@ search-by-criteria() {
 
 
 install-aur-package() {
-	TARGET_PACKAGE=${1}
+	local TARGET_PACKAGE="${1}"
 	
-	compare-versions ${TARGET_PACKAGE} || return 0
+	compare-versions "${TARGET_PACKAGE}" || return 0
 
-	clone-git-repo ${TARGET_PACKAGE} || return 11
+	clone-git-repo "${TARGET_PACKAGE}" || return 11
 
-	build-makepkg-package ${TARGET_PACKAGE} || return 12
+	build-makepkg-package "${TARGET_PACKAGE}" || return 12
 	
-	write-package-list ${TARGET_PACKAGE} || return 13
+	write-package-list "${TARGET_PACKAGE}" || return 13
 
 	return 0
 }
 
 remove-aur-package() {
-	TARGET_PACKAGE=${1}
+	local TARGET_PACKAGE="${1}"
 
-	remove-from-system ${TARGET_PACKAGE} || return 20
+	remove-from-system "${TARGET_PACKAGE}" || return 20
 
-	remove-from-package-list ${TARGET_PACKAGE} || return 21
+	remove-from-package-list "${TARGET_PACKAGE}" || return 21
 
 	return 0
 }
 
 update-aur-package() {
-	TARGET_PACKAGE=${1}
+	local TARGET_PACKAGE=${1}
 
-	install-aur-package ${TARGET_PACKAGE} || return 31
+	install-aur-package "${TARGET_PACKAGE}" || return 31
 	
 	return 0
 }
 
 search-aur-package() {
-	TARGET_KEYWORD=${1}
+	local TARGET_KEYWORD=${1}
 
-	search-by-criteria ${SEARCH_CRITERIA} ${TARGET_KEYWORD} || return 40
+	search-by-criteria "${SEARCH_CRITERIA}" "${TARGET_KEYWORD}" || return 40
 
 	return 0
 }
@@ -338,23 +362,17 @@ fi
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
 GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
-GENERAL_VARIABLES=("ALL" "FORCE" "SOURCE_PATH" "VERBOSITY")
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-w" "--wipe-existing")
-INSTALL_VARIABLES=("CLEANUP" "CLEAN_OPERATION" "WIPE_EXISTING")
 REMOVE_OPTIONS=("-R" "--remove-opts")
-REMOVE_VARIABLES=("REMOVE_OPTS")
-UPDATE_OPTIONS=( "${INSTALL_OPTIONS[@]}" )
-UPDATE_VARIABLES=( "${INSTALL_VARIABLES[@]}" )
+UPDATE_OPTIONS=( "${INSTALL_OPTIONS[*]}" )
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
-SEARCH_VARIABLES=("SEARCH_RESULTS" "SEARCH_CRITERIA")
 COMPLETION_OPTIONS=("-e" "--executable-name")
-COMPLETION_VARIABLES=("EXECUTABLE_NAME")
 AVAILABLE_COMPLETIONS=("bash")
 
 # Variables.
 FORCE=${AURX_FORCE:-false}
 VERBOSITY=${AURX_VERBOSITY:-2}
-CLEANUP=${AURX_CLEANUP:-false}
+CLEANUP=${AURX_CLEANUP:-true}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
@@ -366,8 +384,7 @@ EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
 # Options.
 LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:
 OPTIONS=s:v:fhcCwS:r:aR:e:
-PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}")
-if [[ ${?} -ne 0 ]]; then
+if ! PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
 fi
@@ -420,7 +437,7 @@ while true; do
 			;;
 		-S|--search-criteria)
 			SEARCH_CRITERIA="${2}"
-			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends suggest " =~ "${SEARCH_CRITERIA}" ]]; then
+			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends suggest " =~ ${SEARCH_CRITERIA} ]]; then
 				print_error 52
 				exit 52
 			fi
@@ -457,13 +474,13 @@ elif [[ ! ${POSSIBLE_OPERATIONS[*]} =~ (^|[[:space:]])"${1}"($|[[:space:]]) ]]; 
 fi
 CURRENT_OPERATION=${1}
 shift
-if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ "${CURRENT_OPERATION}" ]] && ! ${ALL}; then
+if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ ${CURRENT_OPERATION} ]] && ! ${ALL}; then
 	print_error 56
 	exit 56
 fi
 
 # Root + install/update.
-if [[ ${UID} -eq 0 ]] && [[ " install update " =~ "${CURRENT_OPERATION}" ]]; then
+if [[ ${UID} -eq 0 ]] && [[ " install update " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 57
 	exit 57
 fi
@@ -488,9 +505,11 @@ case ${VERBOSITY} in
 		;;
 esac
 
-TARGET_PACKAGES="${@}"
+TARGET_PACKAGES=("${@}")
 if ${ALL}; then
-	TARGET_PACKAGES+=$(cat ${SOURCE_PATH}/package_list 2> /dev/null)
+	while IFS= read -r TARGET_PACKAGE; do
+		TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
+	done < "${SOURCE_PATH:?Source path not defined.}"/package_list
 fi
 
 case ${CURRENT_OPERATION} in
@@ -510,19 +529,19 @@ case ${CURRENT_OPERATION} in
 esac		
 ABSENT_PACKAGES=()
 for REQUIRED_PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
-	if [[ ! $(command -v ${REQUIRED_PACKAGE}) ]]; then
+	if [[ ! $(command -v "${REQUIRED_PACKAGE}") ]]; then
 		ABSENT_PACKAGES+=( "${REQUIRED_PACKAGE}" )
 	fi
 done
-if [[ ! -z ${ABSENT_PACKAGES[@]} ]]; then
+if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
 	print_error 59
 	exit 59
 fi
 
-if [[ ${CURRENT_OPERATION} == "completion" ]]; then
-	COMPLETION_TYPE=${TARGET_PACKAGES[0]}
-	if [[ ${AVAILABLE_COMPLETIONS[@]} =~ ${COMPLETION_TYPE} ]]; then
-		aurx-completion ${COMPLETION_TYPE}
+if [[ "${CURRENT_OPERATION}" == completion ]]; then
+	COMPLETION_TYPE="${TARGET_PACKAGES[0]}"
+	if [[ "${AVAILABLE_COMPLETIONS[*]}" =~ ${COMPLETION_TYPE} ]]; then
+		aurx-completion "${COMPLETION_TYPE}"
 		exit 0
 	else
 		print_error 62
@@ -530,8 +549,8 @@ if [[ ${CURRENT_OPERATION} == "completion" ]]; then
 	fi
 fi
 
-for SELECTED_PACKAGE in ${TARGET_PACKAGES[@]}; do
-	${CURRENT_OPERATION}-aur-package "${SELECTED_PACKAGE}" 1> ${STDOUT_DESTINATION} 2> ${STDERR_DESTINATION}
+for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
+	"${CURRENT_OPERATION}"-aur-package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 	ERROR_CODE=${?}
 	case "${ERROR_CODE}" in
 		0 )
