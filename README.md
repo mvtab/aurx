@@ -31,13 +31,13 @@ completion | Generate completion for the specified shell.
 ## Configuration
 
 #### General
-option            | description                                           | default        | env
-:---------------- | :---------------------------------------------------- | :------------- | :--
--a, --all         | Include all installed packages.                       | False          | AURX_ALL
--f, --force       | Forces the current operation, where appliable.        | False          | AURX_FORCE
--h, --help        | Display usage and exit.                               | N/A            | N/A 
--s, --source-path | Work directory for builds and persistent information. | ${HOME}/.src | AURX_SOURCE_PATH
--v, --verbosity   | Level of verbosity: 0 - none, 1 - stderr, 2 - all     | 2              | AURX_VERBOSITY
+option            | description                                 | default      | env
+:---------------- | :------------------------------------------ | :----------- | :--
+-a, --all         | Include all installed packages.             | False        | AURX_ALL
+-f, --force       | Forces the current operation, if appliable. | False        | AURX_FORCE
+-h, --help        | Display usage and exit.                     | N/A          | N/A 
+-s, --source-path | Work directory.                             | ${HOME}/.src | AURX_SOURCE_PATH
+-v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2            | AURX_VERBOSITY
 
 #### Install, Update
 option                | description                                 | default | env
@@ -52,15 +52,15 @@ option            | description                                      | default |
 -R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'      | AURX_REMOVE_OPTS
 
 #### Search
-option                | description                                       | default | env
-:-------------------- | :------------------------------------------------ | :------ | :--
--r, --search-results  | Number of results to display from search queries. | 20      | AURX_SEARCH_RESULTS
--S, --search-criteria | Criteria to use in search queries.                | "name"  | AURX_SEARCH_CRITERIA
+option                | description                        | default | env
+:-------------------- | :--------------------------------- | :------ | :--
+-r, --search-results  | Number of results to display.      | 20      | AURX_SEARCH_RESULTS
+-S, --search-criteria | Criteria to use in search queries. | "name"  | AURX_SEARCH_CRITERIA
 
 #### Completion
-option                | description                                           | default | env
-:-------------------- | :---------------------------------------------------- | :------ | :--
--e, --executable-name | The name of the executable to be used for completion. | aurx    | AURX_EXECUTABLE_NAME
+option                | description                | default | env
+:-------------------- | :------------------------- | :------ | :--
+-e, --executable-name | The name of the executable | aurx    | AURX_EXECUTABLE_NAME
 
 ## Limitations
 
