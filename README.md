@@ -75,8 +75,6 @@ Wokarounds:
 You can increase the default duration of a sudo session by changing the `Defaults timestamp_timeout` in `/etc/sudoers`.  
 Additionally or alternatively, you can refresh the sudo timeout every time you execute sudo by adding `alias sudo='sudo -v; sudo'` to your .bashrc.  
 
-A more extreme way to overcome this would be to edit this script and add `sudo -S` or `sshpass` functionality to makepkg.
-
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
 Every tab does one request.
