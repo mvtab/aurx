@@ -9,15 +9,15 @@ usage() {
 		
 		Operations:
 		  install                   Clone packages and install them with makepkg.
-		  remove                    Remove packages from system and the package_list.
-		  update                    Update packages by comparing their installed version with the latest.
-		  search                    Query the AUR repository with specific criterias and keywords.
+		  remove                    Remove packages from system and the package list.
+		  update                    Convenient link to install which can be expanded.
+		  search                    Query the AUR with specific criterias and keywords via RPC.
 		  completion                Generate completion for the specified shell.
 		
 		Options:
 		  general:
-		  -a, --all                 Include all packages from the package_list. (False)
-		  -f, --force               Forces the current process, where appliable. (False)
+		  -a, --all                 Include all installed packages. (False)
+		  -f, --force               Forces the current operation, where appliable. (False)
 		  -h, --help                Display this information and exit.
 		  -s, --source-path         Work directory for builds and persistent information.(\${HOME}/.src)
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
@@ -25,7 +25,7 @@ usage() {
 		  install, update:
 		  -c, --cleanup             Delete sources after successful installs. (True)
 		  -C, --clean-operation     Delete sources after unsucessful installs. (False)
-		  -w, --wipe-existing       Wipe eventually existing source. (False)
+		  -w, --wipe-existing       Wipe eventually existing sources. (False)
 
 		  remove:
 		  -R, --remove-opts         Opts to give in to pacman for removing package. ('-R')

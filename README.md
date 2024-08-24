@@ -6,58 +6,65 @@ The Archlinux User Repository eXplorer.
 git clone git@github.com:mvtab/aurx.git
 cd aurx/
 chmod +111 ./aurx
-./aurx --help
-```
+ln -sf ./aurx ~/bin/aurx
+aurx --help
 
-## Configuration and usage
-```bash
-usage: aurx [OPERATION] [OPTION..] [PACKAGE..] 
-
-The Archlinux User Repository eXplorer.
-Every option can be set through environment variables but the explicit option has the highest priority.
-
-Operations:
-  install                   Clone packages and install them with makepkg.
-  remove                    Remove packages from system and the package_list.
-  update                    Update packages by comparing their installed version with the latest.
-  search                    Query the AUR repository with specific criterias and keywords.
-  completion                Generate completion for the specified shell.
-
-Options:
-  general:
-  -a, --all                 Include all packages from the package_list.
-  -f, --force               Forces the current process, where appliable.
-  -h, --help                Display this information and exit.
-  -s, --source-path         Work directory for builds and persistent information.
-  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all.
-
-  install, update:
-  -c, --cleanup             Delete sources after successful installs.
-  -C, --clean-operation     Delete sources after unsucessful installs.
-  -w, --wipe-existing       Wipe eventually existing source.
-
-  remove:
-  -R, --remove-opts         Opts to give in to pacman for removing package. (Default '-R')
-
-  search:
-  -r, --search-results      Number of results to display from search queries.
-  -S, --search-criteria     Criteria to use in search queries.
-
-  completion:
-  -e, --executable-name     The name of the executable to be used for completion.
-
-Environment variables:
-  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
-  AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
-```
-
-### Completion
-```bash
+# Optional.
 source <(aurx completion bash)
 ```
 
-Only bash completion is currently available.  
-You can set the executable to configure for completion with `--executable-name`.  
+## Usage
+```
+aurx [OPERATION] [OPTION..] [PACKAGE..]
+``` 
 
-Be advised package completions are limited by the AUR daily rate limit: 4000 requests per IP per day.
+### Operations
+
+operation  | description
+:--------- | :----------
+install    | Clone packages with git and install them with makepkg.
+remove     | Remove packages from system and the package list.
+update     | Convenient link to install which can be expanded.
+search     | Query the AUR with specific criterias and keywords via RPC.
+completion | Generate completion for the specified shell.
+
+## Configuration
+
+#### General
+option            | description                                           | default        | env
+:---------------- | :---------------------------------------------------- | :------------- | :--
+-a, --all         | Include all installed packages.                       | False          | AURX_ALL
+-f, --force       | Forces the current operation, where appliable.        | False          | AURX_FORCE
+-h, --help        | Display usage and exit.                               | N/A            | N/A 
+-s, --source-path | Work directory for builds and persistent information. | ${HOME}/.src | AURX_SOURCE_PATH
+-v, --verbosity   | Level of verbosity: 0 - none, 1 - stderr, 2 - all     | 2              | AURX_VERBOSITY
+
+#### Install, Update
+option                | description                                 | default | env
+:-------------------- | :------------------------------------------ | :------ | :--
+-c, --cleanup         | Delete sources after successful installs.   | True    | AURX_CLEANUP
+-C, --clean-operation | Delete sources after unsuccessful installs. | False   | AURX_CLEAN_OPERATION
+-w, --wipe-existing   | Wipe eventually existing sources.           | False   | AURX_WIPE_EXISTING
+
+#### Remove
+option            | description                                      | default | env
+:---------------- | :----------------------------------------------- | :------ | :--
+-R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'      | AURX_REMOVE_OPTS
+
+#### Search
+option                | description                                       | default | env
+:-------------------- | :------------------------------------------------ | :------ | :--
+-r, --search-results  | Number of results to display from search queries. | 20      | AURX_SEARCH_RESULTS
+-S, --search-criteria | Criteria to use in search queries.                | "name"  | AURX_SEARCH_CRITERIA
+
+#### Completion
+option                | description                                           | default | env
+:-------------------- | :---------------------------------------------------- | :------ | :--
+-e, --executable-name | The name of the executable to be used for completion. | aurx    | AURX_EXECUTABLE_NAME
+
+## Limitations
+
+### Completion
+Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.
+Every tab does one request.
 
