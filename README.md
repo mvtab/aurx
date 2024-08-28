@@ -67,7 +67,7 @@ option                | description                | default | env
 ## Limitations
 
 ### Non-interactive
-Due to using makepkg's options to check for dependencies and install through pacman, this script can not be ran non-interactively.
+Due to using makepkg's options to check for dependencies and install through pacman, this script can not be run non-interactively.
 Theoretically removing all parameters passed to makepkg should instantly make the script non-interactive.
 
 ### Sudo password
