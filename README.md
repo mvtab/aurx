@@ -6,6 +6,8 @@ The Archlinux User Repository eXplorer.
 git clone git@github.com:mvtab/aurx.git
 cd aurx/
 chmod +111 ./aurx
+
+# Optional.
 ln -sf ./aurx ~/bin/aurx
 aurx --help
 
