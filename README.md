@@ -61,7 +61,7 @@ option                | description                        | default      | env
 -b, --sort-by         | Key to sort results by.            | "popularity" | AURX_SORT_BY
 -o, --order-by        | How to order search results.       | "descending" | AURX_ORDER_BY
 -O, --no-out-of-date  | Remove all out of date packages.   | false        | AURX_NO_OUT_OF_DATE
--m, --maintianed      | Only return maintained packages.   | false        | AURX_MAINTAINED
+-m, --maintained      | Only return maintained packages.   | false        | AURX_MAINTAINED
 
 #### Completion
 option                | description                | default | env
