@@ -16,16 +16,16 @@ usage() {
 		
 		Options:
 		  general:
-		  -a, --all                 Include all installed packages. (False)
-		  -f, --force               Forces the current operation, where appliable. (False)
+		  -a, --all                 Include all installed packages. (false)
+		  -f, --force               Forces the current operation, where appliable. (false)
 		  -h, --help                Display this information and exit.
 		  -s, --source-path         Work directory for builds and persistent information.(\${HOME}/.src)
 		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
 		
 		  install, update:
-		  -c, --cleanup             Delete sources after successful installs. (True)
-		  -C, --clean-operation     Delete sources after unsucessful installs. (False)
-		  -w, --wipe-existing       Wipe eventually existing sources. (False)
+		  -c, --cleanup             Delete sources after successful installs. (true)
+		  -C, --clean-operation     Delete sources after unsucessful installs. (false)
+		  -w, --wipe-existing       Wipe eventually existing sources. (false)
 
 		  remove:
 		  -R, --remove-opts         Opts to give in to pacman for removing package. ('-R')
@@ -33,6 +33,10 @@ usage() {
 		  search:
 		  -r, --search-results      Number of results to display from search queries. (20)
 		  -S, --search-criteria     Criteria to use in search queries. ("name")
+		  -b, --sort-by             Key to sort results by. ("popularity")
+		  -o, --order-by            How to order search results. ("descending")
+		  -O, --no-out-of-date      Remove all out of date packages. (false)
+		  -m, --maintained          Only return maintained packages. (false)
 
 		  completion:
 		  -e, --executable-name     The name of the executable to be used for completion. ("aurx")
@@ -47,76 +51,84 @@ print_error() {
 	local GIVEN_ERROR=${1}
 
 	case "${GIVEN_ERROR}" in
-		10)
+		10 )
 			;;
-		11)
+		11 )
 			echo "[!] Could not clone git repository of \"${SELECTED_PACKAGE}\"."
 			;;
-		12)
+		12 )
 			echo "[!] Could not build \"${SELECTED_PACKAGE}\"."
 			;;
-		13)
+		13 )
 			echo "[!] Could not write \"${SELECTED_PACKAGE}\" to the package_list."
 			;;
-		20)
+		20 )
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from system."
 			;;
-		21)
+		21 )
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
-		30)
+		30 )
 			;;
-		31)
+		31 )
 			echo "[!] Could not update \"${SELECTED_PACKAGE}\"."
 			;;
-		40)
+		40 )
 			echo "[!] No search results found for \"${SELECTED_PACKAGE}\"."
 			;;
-		50 | 51)
+		50 | 51 )
 			echo "[-] getopt not working properly."
 			;;
-		52)
+		52 )
 			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
 			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, suggest."
 			;;
-		53)
+		53 )
 			echo "[-] Unknown error while parsing options."
 			;;
-		54)
+		54 )
 			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
-		55)
+		55 )
 			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
-		56)
+		56 )
 			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
 			;;
-		57)
+		57 )
 			echo "[!] Can't install or update packages as root."
 			;;
-		58)
+		58 )
 			echo "[-] Unknown verbosity level \"${VERBOSITY}\"."
 			echo "[i] Possible options are: 0 - nothing, 1 - stderr, 2 - all"
 			;;
-		59)
+		59 )
 			echo "[-] The following required packages are not installed: ${ABSENT_PACKAGES[*]}."
 			;;
-		60)
+		60 )
 			echo "[-] Shell type \"${SHELL_TYPE}\" is not supported."
 			;;
-		61)
+		61 )
 			echo "[-] Uknown error code ${ERROR_CODE} received."
 			;;
-		62)
+		62 )
 			echo "[-] Completion for \"${COMPLETION_TYPE}\" is not available."
 			;;
-		63)
+		63 )
 			echo "[-] pushd failed at \"${PWD}\"."
 			;;
-		64)
+		64 )
 			echo "[-] popd failed at \"${PWD}\"."
 			;;
-		*)
+		65)
+			echo "[-] Unknown sort-by value: \"${SORT_BY}\"."
+			echo "[i] Possible options are: firstsubmitted, lastmodified, votes, popularity."
+			;;
+		66)
+			echo "[-] Unknown order-by value: \"${ORDER_BY}\"."
+			echo "[i] Possible options are: ascending, descending."
+			;;
+		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
 			;;
 	esac
@@ -281,36 +293,37 @@ write-package-list() {
 	return 0
 }
 
-search-by-criteria() {
-	local SEARCH_CRITERIA="${1}"
-	local TARGET_KEYWORD="${2}"
-	case "${SEARCH_CRITERIA}" in
-		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends)
-			local RESULTS
-			RESULTS=$(curl \
-				"https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" 2> /dev/null \
-				| jq -r ".results[:${SEARCH_RESULTS}]" \
-				| jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version) \n\t\(.Description)"')
-			if [[ -z "${RESULTS}" ]]; then
-				return 1
-			fi
-			;;
-		suggest)
-			local RESULTS
-			RESULTS=$(curl \
-				"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null \
-				| jq -r ".[:${SEARCH_RESULTS}]")
-			if [[ -z "${RESULTS}" ]]; then
-				return 2
-			fi
-			;;
-		*)
-			return 3
-			;;
-	esac
+aur-rpc-search() {
+	local TARGET_KEYWORD="${1}"
+	local RESULTS
+	RESULTS=$(curl "https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" 2> /dev/null)
+	RESULTS=$(echo "${RESULTS}" | jq -r ".results | sort_by(.${SORT_BY})")
+	if [[ "${ORDER_BY}" == "descending" ]]; then
+		RESULTS=$(echo "${RESULTS}" | jq -r 'reverse')
+	fi
+	if ${NO_OUT_OF_DATE}; then
+		RESULTS=$(echo "${RESULTS}" | jq -r '[.[] | select(.OutOfDate == null)]')
+	fi
+	if ${MAINTAINED}; then
+		RESULTS=$(echo "${RESULTS}" | jq -r '[.[] | select(.Maintainer != null)]')
+	fi
+	RESULTS=$(echo "${RESULTS}" | jq -r ".[:${SEARCH_RESULTS}]")
+	RESULTS=$(echo "${RESULTS}" | \
+		jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \n\t\(.Description)"')
+	if [[ -z "${RESULTS}" ]]; then
+		return 1
+	fi
 	echo "${RESULTS}"
 }
 
+aur-rpc-suggest() {
+	local TARGET_KEYWORD="${1}"
+	local RESULTS
+	RESULTS=$(curl \
+		"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null \
+		| jq -r ".[:${SEARCH_RESULTS}]")
+	echo "${RESULTS}"
+}
 
 install-aur-package() {
 	local TARGET_PACKAGE="${1}"
@@ -347,7 +360,18 @@ update-aur-package() {
 search-aur-package() {
 	local TARGET_KEYWORD=${1}
 
-	search-by-criteria "${SEARCH_CRITERIA}" "${TARGET_KEYWORD}" || return 40
+	case "${SEARCH_CRITERIA}" in
+		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends )
+			aur-rpc-search "${TARGET_KEYWORD}" || return 40
+			;;
+		suggest )
+			aur-rpc-suggest "${TARGET_KEYWORD}"
+			;;
+		* )
+			print_error 52
+			exit 52
+			;;
+	esac
 
 	return 0
 }
@@ -365,7 +389,7 @@ GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" 
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-w" "--wipe-existing")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=( "${INSTALL_OPTIONS[*]}" )
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 AVAILABLE_COMPLETIONS=("bash")
 
@@ -380,10 +404,14 @@ SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 ALL=${AURX_ALL:-false}
 REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
 EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
+SORT_BY=${AURX_SORT_BY:-popularity}
+ORDER_BY=${AURX_ORDER_BY:-descending}
+NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
+MAINTAINED=${AURX_MAINTAINED:-false}
 
 # Options.
-LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:
-OPTIONS=s:v:fhcCwS:r:aR:e:
+LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:,sort-by:,order-by:,no-out-of-date,maintained
+OPTIONS=s:v:fhcCwS:r:aR:e:b:o:Om
 if ! PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
@@ -402,6 +430,14 @@ while true; do
 		-a|--all )
 			ALL=true
 			shift
+			;;
+		-b|--sort-by )
+			SORT_BY="${2}"
+			if [[ ! " firstsubmitted lastmodified votes popularity " =~ ${SORT_BY} ]]; then
+				print_error 65
+				exit 65
+			fi
+			shift 2
 			;;
 		-c|--cleanup )
 			CLEANUP=true
@@ -423,6 +459,22 @@ while true; do
 			usage
 			exit 0
 			;;
+		-m|--maintained )
+			MAINTAINED=true
+			shift
+			;;
+		-o|--order-by )
+			ORDER_BY="${2}"
+			if [[ ! " ascending descending " =~ ${ORDER_BY} ]]; then
+				print_error 66
+				exit 66
+			fi
+			shift 2
+			;;
+		-O|--no-out-of-date )
+			NO_OUT_OF_DATE=true
+			shift
+			;;
 		-r|--search-results )
 			SEARCH_RESULTS="${2}"
 			shift 2
@@ -435,7 +487,7 @@ while true; do
 			SOURCE_PATH="${2}"
 			shift 2
 			;;
-		-S|--search-criteria)
+		-S|--search-criteria )
 			SEARCH_CRITERIA="${2}"
 			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends suggest " =~ ${SEARCH_CRITERIA} ]]; then
 				print_error 52
@@ -487,21 +539,41 @@ fi
 
 # Verbosity.
 case ${VERBOSITY} in
-	0) 
+	0 ) 
 		STDOUT_DESTINATION=/dev/null
 		STDERR_DESTINATION=/dev/null
 		;;
-	1)
+	1 )
 		STDOUT_DESTINATION=/dev/null
 		STDERR_DESTINATION=/dev/stderr
 		;;
-	2)
+	2 )
 		STDOUT_DESTINATION=/dev/stdout
 		STDERR_DESTINATION=/dev/stderr
 		;;
-	*)
+	* )
 		print_error 58
 		exit 58
+		;;
+esac
+
+# Sort by.
+case "${SORT_BY}" in
+	firstsubmitted )
+		SORT_BY="FirstSubmitted"
+		;;
+	lastmodified )
+		SORT_BY="LastModified"
+		;;
+	votes )
+		SORT_BY="NumVotes"
+		;;
+	popularity )
+		SORT_BY="Popularity"
+		;;
+	* )
+		print_error 65
+		exit 65
 		;;
 esac
 
@@ -555,7 +627,7 @@ for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 	case "${ERROR_CODE}" in
 		0 )
 			;;
-		10 | 11 | 12 | 13 | 20 | 21 | 30 | 31 | 40)
+		10 | 11 | 12 | 13 | 20 | 21 | 30 | 31 | 40 )
 			print_error ${ERROR_CODE}
 			;;
 		* )

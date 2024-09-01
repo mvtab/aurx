@@ -6,8 +6,6 @@ The Archlinux User Repository eXplorer.
 git clone git@github.com:mvtab/aurx.git
 cd aurx/
 chmod +111 ./aurx
-
-# Optional.
 ln -sf ./aurx ~/bin/aurx
 aurx --help
 
@@ -35,8 +33,8 @@ completion | Generate completion for the specified shell.
 #### General
 option            | description                                 | default      | env
 :---------------- | :------------------------------------------ | :----------- | :--
--a, --all         | Include all installed packages.             | False        | AURX_ALL
--f, --force       | Forces the current operation, if appliable. | False        | AURX_FORCE
+-a, --all         | Include all installed packages.             | false        | AURX_ALL
+-f, --force       | Forces the current operation, if appliable. | false        | AURX_FORCE
 -h, --help        | Display usage and exit.                     | N/A          | N/A 
 -s, --source-path | Work directory.                             | ${HOME}/.src | AURX_SOURCE_PATH
 -v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2            | AURX_VERBOSITY
@@ -44,9 +42,9 @@ option            | description                                 | default      |
 #### Install, Update
 option                | description                                 | default | env
 :-------------------- | :------------------------------------------ | :------ | :--
--c, --cleanup         | Delete sources after successful installs.   | True    | AURX_CLEANUP
--C, --clean-operation | Delete sources after unsuccessful installs. | False   | AURX_CLEAN_OPERATION
--w, --wipe-existing   | Wipe eventually existing sources.           | False   | AURX_WIPE_EXISTING
+-c, --cleanup         | Delete sources after successful installs.   | true    | AURX_CLEANUP
+-C, --clean-operation | Delete sources after unsuccessful installs. | false   | AURX_CLEAN_OPERATION
+-w, --wipe-existing   | Wipe eventually existing sources.           | false   | AURX_WIPE_EXISTING
 
 #### Remove
 option            | description                                      | default | env
@@ -54,10 +52,14 @@ option            | description                                      | default |
 -R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'      | AURX_REMOVE_OPTS
 
 #### Search
-option                | description                        | default | env
-:-------------------- | :--------------------------------- | :------ | :--
--r, --search-results  | Number of results to display.      | 20      | AURX_SEARCH_RESULTS
--S, --search-criteria | Criteria to use in search queries. | "name"  | AURX_SEARCH_CRITERIA
+option                | description                        | default      | env
+:-------------------- | :--------------------------------- | :----------- | :--
+-r, --search-results  | Number of results to display.      | 20           | AURX_SEARCH_RESULTS
+-S, --search-criteria | Criteria to use in search queries. | "name"       | AURX_SEARCH_CRITERIA
+-b, --sort-by         | Key to sort results by.            | "popularity" | AURX_SORT_BY
+-o, --order-by        | How to order search results.       | "descending" | AURX_ORDER_BY
+-O, --no-out-of-date  | Remove all out of date packages.   | false        | AURX_NO_OUT_OF_DATE
+-m, --maintianed      | Only return maintained packages.   | false        | AURX_MAINTAINED
 
 #### Completion
 option                | description                | default | env
@@ -67,7 +69,7 @@ option                | description                | default | env
 ## Limitations
 
 ### Non-interactive
-Due to using makepkg's options to check for dependencies and install through pacman, this script can not be run non-interactively.
+Due to using makepkg's options to check for dependencies and install through pacman, this script can not be ran non-interactively.
 Theoretically removing all parameters passed to makepkg should instantly make the script non-interactive.
 
 ### Sudo password
