@@ -11,6 +11,8 @@ services:
       dockerfile: Containerfile
       target: one-stage
     command: ["sleep", "10000"]
+    networks:
+    - aurx-internal
     environment:
       AURX_SOURCE_PATH: /home/archlinux/.src
     restart: no
