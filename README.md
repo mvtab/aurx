@@ -89,6 +89,34 @@ option                | description                | default | values
 :-------------------- | :------------------------- | :------ | :-----
 -e, --executable-name | The name of the executable | \${0}   | any string
 
+#### Running in containers
+There are a few steps to be taken before you can install packages with aurx in a container context.  
+This guide should help get you started.  
+The examples are highly insecure and serve only as proof of concept.  
+
+##### Ad-hoc
+```bash
+docker run --rm -d --name archlinux-container archlinux/archlinux sleep 10000
+docker exec -it archlinux-container /bin/bash
+> useradd -m archlinux
+> passwd -d archlinux
+> pacman -Syu
+> pacman -S binutils debugedit fakeroot git jq sudo
+> echo "archlinux ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/archlinux
+> # You will get permission errors on /dev/stdout if you just su to archlinux here.
+> exit
+docker exec -u archlinux -it archlinux-container /bin/bash
+> cd
+> git clone https://github.com/mvtab/aurx
+> cd aurx/
+> sudo cp ./aurx /usr/bin/aurx
+> source <(aurx completion bash --executable-name aurx)
+> aurx install rocketchat-client-bin --makepkg-args='--noconfirm -sirc'
+```
+
+##### Dockerfile
+Same commands as up but adapted to a Dockerfile through `RUN` instructions and compacted into fewer layers.
+
 ## Examples
 
 ##### Install a new package.

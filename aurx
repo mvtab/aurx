@@ -722,7 +722,7 @@ fi
 
 case "${CURRENT_OPERATION}" in
 	install | update )
-		REQUIRED_PACKAGES=('awk' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee')
+		REQUIRED_PACKAGES=('awk' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee' 'debugedit' 'fakeroot' 'strip')
 		;;
 	remove )
 		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
@@ -755,6 +755,15 @@ if [[ "${CURRENT_OPERATION}" == completion ]]; then
 		print_error 62
 		exit 62
 	fi
+fi
+
+if [[ ! -d "${SOURCE_PATH}" ]]; then
+	mkdir -p "${SOURCE_PATH}"
+	chmod 0600 "${SOURCE_PATH}"
+fi
+if [[ ! -f "${SOURCE_PATH}"/package_list ]]; then
+	touch "${SOURCE_PATH}"/package_list
+	chmod 0600 "${SOURCE_PATH}"/package_list
 fi
 
 for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
