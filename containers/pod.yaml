@@ -11,7 +11,7 @@ spec:
   - name: aurx-container-00
     image: aurx-arch-example:latest
     command: ["sleep", "10000"]
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Never
   restartPolicy: Never
 
 ...
