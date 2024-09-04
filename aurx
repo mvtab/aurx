@@ -724,13 +724,13 @@ fi
 
 case "${CURRENT_OPERATION}" in
 	install | update )
-		REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
+		REQUIRED_PACKAGES=('awk' 'cat' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee')
 		;;
 	remove )
-		REQUIRED_PACKAGES=('pacman')
+		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
 		;;
 	search | completion )
-		REQUIRED_PACKAGES=('curl' 'jq')
+		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	* )
 		print_error 55
@@ -765,7 +765,7 @@ for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 	case "${ERROR_CODE}" in
 		0 )
 			;;
-		10 | 11 | 12 | 13 | 20 | 21 | 30 | 31 | 40 )
+		10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 | 40 )
 			print_error ${ERROR_CODE}
 			;;
 		* )
