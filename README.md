@@ -87,17 +87,17 @@ option                | description                | default
 
 ## Examples
 
-### Install a new package.
+##### Install a new package.
 ```bash
 aurx install test
 ```
 
-### Remove a package from the system and the script's package list, with custom pacman remove flags.
+##### Remove a package from the system and the script's package list, with custom pacman remove flags.
 ```bash
 aurx remove test --remove-opts '-Rsncu'
 ```
 
-### Download a package to modify before install.
+##### Download a package to modify before install.
 ```bash
 aurx install test --only-pull --source-path /tmp
 cd /tmp/test
@@ -106,34 +106,34 @@ cd -
 aurx install test
 ```
 
-### Update a package only if the present source's version is higher than the installed on.
+##### Update a package only if the present source's version is higher than the installed on.
 ```bash
 aurx install test --verify-versions --comparison-criteria pkgbuild
 ```
 
-### Update a package to the latest version available online and delete source after.
+##### Update a package to the latest version available online and delete source after.
 ```bash
 aurx update test
 # equivalent of
 aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation
 ```
 
-### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
+##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
 ```bash
 aurx search test --no-out-of-date --maintained --sort-by votes
 ```
 
-### Grab the all-time first 5 submitted packages of a maintainer.
+##### Grab the all-time first 5 submitted packages of a maintainer.
 ```bash
 aurx search FabioLolix --search-criteria maintainer --sort-by firstsubmitted --order-by ascending --search-results 5
 ```
 
-### Grab the latest 5 modified packages that have gcc as makedepends.
+##### Grab the latest 5 modified packages that have gcc as makedepends.
 ```bash
 aurx search gcc --search-criteria makedepends --sort-by lastmodified --search-results 5
 ```
 
-### Get bash completion for custom executable name (where ${0} is not correct).
+##### Get bash completion for custom executable name (where ${0} is not correct).
 ```bash
 source <(aurx completion bash --executable-name aurx)
 ```
