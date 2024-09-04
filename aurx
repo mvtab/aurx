@@ -8,9 +8,9 @@ usage() {
 		Every option can be set through environment variables but the explicit option has the highest priority.
 		
 		Operations:
-		  install                   safe option for installing custom sources.
+		  install                   pretty safe option for installing custom sources.
 		  remove                    remove packages from system and the package list.
-		  update                    safe option for installing default sources. (will overwrite existent ones)
+		  update                    pretty safe option for installing default sources. (will overwrite and delete existent ones)
 		  search                    query the AUR with specific criterias and keywords via RPC.
 		  completion                generate completion for the specified shell.
 		
@@ -48,11 +48,10 @@ usage() {
 		  -k, --keep-sources        don't cleanup after successful updates. (false)
 		  -K, --keep-failed-sources don't cleanup after unsuccessfulupdates. (false)
 		  -M, --makepkg-args        args to give in to makepkg installs. ('-sirc')
-		  -W, --do-not-wipe         don't remove existing sources. (false)
 		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
 
 		  completion:
-		  -e, --executable-name     the name of the executable to be used for completion. ("aurx")
+		  -e, --executable-name     the name of the executable to be used for completion. ("\${0}")
 		
 		Environment variables:
 		  Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
