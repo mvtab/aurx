@@ -118,6 +118,13 @@ aurx update test
 aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation
 ```
 
+##### Update all installed packages.
+```bash
+aurx update --all
+# equivalent of 
+aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation
+```
+
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
 ```bash
 aurx search test --no-out-of-date --maintained --sort-by votes
