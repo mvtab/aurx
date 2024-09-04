@@ -92,6 +92,10 @@ option                | description                | default | values
 #### Running in containers
 There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
 
+#### Non-interactive
+Script can be ran noninteractively by changing the makepkg args (`-M`, `--makepkg-args`) to, for example, `'--noconfirm -sirc'`.  
+`sudo` password must be handled by the user. (see Limitations)
+
 ## Examples
 
 ##### Install a new package.
@@ -157,9 +161,6 @@ source <(aurx completion bash --executable-name aurx)
 ### Pretty safe
 Do notice the "pretty safe" in install and update's descriptions, which should be a warning.  
 Don't use this script's base dir as sole copy of your work.
-
-### Non-interactive
-Script can be ran noninteractively by changing the makepkg args (-M, --makepkg-args) to, for example, '--noconfirm -sirc'.
 
 ### Sudo password
 This script intentionally does not handle sudo passwords in any way.  
