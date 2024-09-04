@@ -111,7 +111,7 @@ docker exec -u archlinux -it archlinux-container /bin/bash
 > cd aurx/
 > sudo cp ./aurx /usr/bin/aurx
 > source <(aurx completion bash --executable-name aurx)
-> aurx install rocketchat-client-bin --makepkg-args='--noconfirm -sirc'
+> aurx install cilium-git --makepkg-args='--noconfirm -sirc'
 ```
 
 ##### Dockerfile
@@ -184,8 +184,7 @@ Do notice the "pretty safe" in install and update's descriptions, which should b
 Don't use this script's base dir as sole copy of your work.
 
 ### Non-interactive
-Due to using makepkg's options to check for dependencies and install through pacman, this script can not be run non-interactively.
-Theoretically removing all parameters passed to makepkg should instantly make the script non-interactive.
+Script can be ran noninteractively by changing the makepkg args (-M, --makepkg-args) to, for example, '--noconfirm -sirc'.
 
 ### Sudo password
 This script intentionally does not handle sudo passwords in any way.  
@@ -193,6 +192,8 @@ This script intentionally does not handle sudo passwords in any way.
 Wokarounds:  
 You can increase the default duration of a sudo session by changing the `Defaults timestamp_timeout` in `/etc/sudoers`.  
 Additionally or alternatively, you can refresh the sudo timeout every time you execute sudo by adding `alias sudo='sudo -v; sudo'` to your .bashrc.  
+
+An extreme way to overcome this is giving your user NOPASSWD sudo privileges, which is highly insecure and not adviced even in test labs.
 
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
