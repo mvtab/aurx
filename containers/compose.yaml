@@ -1,0 +1,17 @@
+networks:
+  aurx-internal:
+    external: False
+
+name: aurx
+
+services:
+  host:
+    build:
+      context: ./
+      dockerfile: Containerfile
+      target: one-stage
+    command: ["sleep", "10000"]
+    environment:
+      AURX_SOURCE_PATH: /home/archlinux/.src
+    restart: no
+ 
