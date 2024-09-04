@@ -759,11 +759,9 @@ fi
 
 if [[ ! -d "${SOURCE_PATH}" ]]; then
 	mkdir -p "${SOURCE_PATH}"
-	chmod 0600 "${SOURCE_PATH}"
 fi
 if [[ ! -f "${SOURCE_PATH}"/package_list ]]; then
 	touch "${SOURCE_PATH}"/package_list
-	chmod 0600 "${SOURCE_PATH}"/package_list
 fi
 
 for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
