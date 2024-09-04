@@ -111,7 +111,7 @@ cd -
 aurx install test
 ```
 
-##### Update a package only if the present source's version is higher than the installed on.
+##### Update a package only if the present source's version is higher than the installed one.
 ```bash
 aurx install test --verify-versions --comparison-criteria pkgbuild
 ```
