@@ -231,10 +231,8 @@ compare-versions() {
 			local LATEST_VERSION
 			local PKGVER
 			local PKGREL
-			PKGVER=$(cat "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD" \
-				| sed -n 's/pkgver=\(.*\)/\1/p')
-			PKGREL=$(cat "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD" \
-				| sed -n 's/pkgrel=\(.*\)/\1/p')
+			PKGVER=$(sed -n 's/pkgver=\(.*\)/\1/p' "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
+			PKGREL=$(sed -n 's/pkgrel=\(.*\)/\1/p' "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
 			LATEST_VERSION="${PKGVER}-${PKGREL}"
 			;;
 		rpc )
@@ -724,7 +722,7 @@ fi
 
 case "${CURRENT_OPERATION}" in
 	install | update )
-		REQUIRED_PACKAGES=('awk' 'cat' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee')
+		REQUIRED_PACKAGES=('awk' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee')
 		;;
 	remove )
 		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
