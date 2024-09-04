@@ -300,7 +300,7 @@ build-makepkg-package() {
 		print_error 63
 		exit 63
 	fi
-	if ! makepkg "${MAKEPKG_ARGS}"; then
+	if ! makepkg ${MAKEPKG_ARGS}; then
 		if ! popd 1> /dev/null; then
 			print_error 64
 			exit 64
