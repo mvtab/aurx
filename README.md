@@ -4,7 +4,6 @@ The Archlinux User Repository eXplorer.
 ## Motivation
 This script strides to be a lightweight AUR helper that takes on AUR-related tasks and nothing more.  
 It also offers the freedom to manipulate and keep track of all kinds of sources: self maintained or online ones.  
-Running interactively in container contexts should also be not only possible, but also comfortable, if all the required binaries are there.
 
 ## Installation
 ```
@@ -13,7 +12,7 @@ cd aurx/
 chmod +111 ./aurx
 
 # Optional.
-ln -sf ./aurx ~/bin/aurx
+ln -sf ${PWD}/aurx ~/bin/aurx
 aurx --help
 
 # Optional.
