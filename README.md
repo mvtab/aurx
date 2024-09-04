@@ -76,7 +76,7 @@ option                | description                        | default      | valu
 -r, --search-results  | Number of results to display.      | 20           | any int
 -S, --search-criteria | Criteria to use in search queries. | "name"       | "name", "name-desc", "maintainer", "depends", "makedepends", "optdepends", "checkdepends", "suggest"
 -b, --sort-by         | Key to sort results by.            | "popularity" | "firstsubmitted", "lastmodified", "votes", "popularity"
--o, --order-by        | How to order search results.       | "descending" | "ascending, "descending"
+-o, --order-by        | How to order search results.       | "descending" | "ascending", "descending"
 -O, --no-out-of-date  | Remove all out of date packages.   | false        | true, false
 -m, --maintained      | Only return maintained packages.   | false        | true, false
 
