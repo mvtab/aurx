@@ -1,6 +1,11 @@
 # aurx
 The Archlinux User Repository eXplorer.
 
+## Motivation
+This script strides to be a lightweight AUR helper that takes on AUR-related tasks and nothing more.  
+It also offers the freedom to manipulate and keep track of all kinds of sources: self maintained or online ones.  
+Running in container contexts should also be not only possible, but also comfortable, if all the required binaries are there.
+
 ## Installation
 ```
 git clone git@github.com:mvtab/aurx.git
@@ -33,7 +38,7 @@ completion | generate completion for the specified shell.
 ## Configuration
 
 #### Environment variables
-Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
+Capitalized long option names with `AURX_` prefix. For example for `--search-criteria`: `AURX_SEARCH_CRITERIA`.
 
 #### General
 option            | description                                 | default      | values 
