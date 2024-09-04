@@ -36,54 +36,54 @@ completion | generate completion for the specified shell.
 Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
 
 #### General
-option            | description                                 | default      
-:---------------- | :------------------------------------------ | :------ 
--a, --all         | Include all installed packages.             | false 
--f, --force       | Forces the current operation, if appliable. | false 
--h, --help        | Display usage and exit.                     | N/A 
--s, --source-path | Work directory.                             | ${HOME}/.src 
--v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2 
+option            | description                                 | default      | values 
+:---------------- | :------------------------------------------ | :----------- | :-----
+-a, --all         | Include all installed packages.             | false        | true, false
+-f, --force       | Forces the current operation, if appliable. | false        | true, false
+-h, --help        | Display usage and exit.                     | N/A          | N/A
+-s, --source-path | Work directory.                             | ${HOME}/.src | any path
+-v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2            | 0, 1, 2
 
 #### Install
-option                    | description                                 | default
-:------------------------ | :------------------------------------------ | :------
--c, --cleanup             | Delete sources after successful installs.   | false
--C, --clean-operation     | Delete sources after unsuccessful installs. | false
--M, --makepkg-args        | Args to give in to makepkg installs.        | '-sirc'
--p, --only-pull           | Only pulls the repository from AUR          | false
--V, --verify-versions     | compare target versions to installed ones.  | false
--w, --wipe-existing       | Wipe eventually existing sources.           | false
--W, --overwrite-existing  | can the existing sources be overwritten     | false
--x, --comparison-criteria | criteria to use when comparing packages     | "rpc" 
+option                    | description                                 | default | values
+:------------------------ | :------------------------------------------ | :------ | :-----
+-c, --cleanup             | Delete sources after successful installs.   | false   | true, false
+-C, --clean-operation     | Delete sources after unsuccessful installs. | false   | true, false
+-M, --makepkg-args        | Args to give in to makepkg installs.        | '-sirc' | any makepkg args
+-p, --only-pull           | Only pulls the repository from AUR          | false   | true, false
+-V, --verify-versions     | compare target versions to installed ones.  | false   | true, false
+-w, --wipe-existing       | Wipe eventually existing sources.           | false   | true, false
+-W, --overwrite-existing  | can the existing sources be overwritten     | false   | true, false
+-x, --comparison-criteria | criteria to use when comparing packages     | "rpc"   | "rpc", "pkgbuild"
 
 #### Remove
-option            | description                                      | default 
-:---------------- | :----------------------------------------------- | :------
--R, --remove-opts | Opts to give in to pacman for removing packages. | '-R' 
+option            | description                                      | default | values
+:---------------- | :----------------------------------------------- | :------ | :-----
+-R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'    | any pacman args
 
 #### Update
-option                    | description                        | default 
-:------------------------ | :--------------------------------- | :------
--B, --block-overwrite     | Don't allow overwriting existing sources. | false
--k, --keep-sources        | Don't cleanup after successful installs   | false
--K, --keep-failed-sources | Don't cleanup after unsuccessful installs | false
--M, --makepkg-args        | Args to give in to makepkg installs.      | '-sirc'
--x, --comparison-criteria | criteria to use when comparing packages   | "rpc" 
+option                    | description                               | default | values
+:------------------------ | :---------------------------------------- | :------ | :-----
+-B, --block-overwrite     | Don't allow overwriting existing sources. | false   | true, false
+-k, --keep-sources        | Don't cleanup after successful installs   | false   | true, false
+-K, --keep-failed-sources | Don't cleanup after unsuccessful installs | false   | true, false
+-M, --makepkg-args        | Args to give in to makepkg installs.      | '-sirc' | any makepkg args
+-x, --comparison-criteria | criteria to use when comparing packages   | "rpc"   | "rpc", "pkgbuild"
 
 #### Search
-option                | description                        | default 
-:-------------------- | :--------------------------------- | :------
--r, --search-results  | Number of results to display.      | 20
--S, --search-criteria | Criteria to use in search queries. | "name"
--b, --sort-by         | Key to sort results by.            | "popularity"
--o, --order-by        | How to order search results.       | "descending"
--O, --no-out-of-date  | Remove all out of date packages.   | false
--m, --maintained      | Only return maintained packages.   | false
+option                | description                        | default      | values
+:-------------------- | :--------------------------------- | :----------- | :-----
+-r, --search-results  | Number of results to display.      | 20           | any int
+-S, --search-criteria | Criteria to use in search queries. | "name"       | "name", "name-desc", "maintainer", "depends", "makedepends", "optdepends", "checkdepends", "suggest"
+-b, --sort-by         | Key to sort results by.            | "popularity" | "firstsubmitted", "lastmodified", "votes", "popularity"
+-o, --order-by        | How to order search results.       | "descending" | "ascending, "descending"
+-O, --no-out-of-date  | Remove all out of date packages.   | false        | true, false
+-m, --maintained      | Only return maintained packages.   | false        | true, false
 
 #### Completion
-option                | description                | default 
-:-------------------- | :------------------------- | :------ 
--e, --executable-name | The name of the executable | \${0}
+option                | description                | default | values
+:-------------------- | :------------------------- | :------ | :-----
+-e, --executable-name | The name of the executable | \${0}   | any string
 
 ## Examples
 
