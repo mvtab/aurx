@@ -91,17 +91,18 @@ option                | description                | default | values
 
 #### Running in containers
 There are a few steps to be taken before you can install packages with aurx in a container context.  
-This guide should help get you started.  
+This guide should help get you started. `docker` was used as an example. Should work the same with alternatives such as `podman`, `nerdctl`, etc.  
 The examples are highly insecure and serve only as proof of concept.  
 
 ##### Ad-hoc
+
 ```bash
 docker run --rm -d --name archlinux-container archlinux/archlinux sleep 10000
 docker exec -it archlinux-container /bin/bash
 > useradd -m archlinux
 > passwd -d archlinux
 > pacman -Syu
-> pacman -S binutils debugedit fakeroot git jq sudo
+> pacman -S binutils debugedit fakeroot gcc git jq make sudo
 > echo "archlinux ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/archlinux
 > # You will get permission errors on /dev/stdout if you just su to archlinux here.
 > exit
@@ -111,11 +112,17 @@ docker exec -u archlinux -it archlinux-container /bin/bash
 > cd aurx/
 > sudo cp ./aurx /usr/bin/aurx
 > source <(aurx completion bash --executable-name aurx)
-> aurx install cilium-git --makepkg-args='--noconfirm -sirc'
+> aurx install hardened-malloc-git --makepkg-args='--noconfirm -sirc'
 ```
 
-##### Dockerfile
-Same commands as up but adapted to a Dockerfile through `RUN` instructions and compacted into fewer layers.
+##### Containerfile
+An example Containerfile can be found in the repository root. 
+```bash
+docker build -t archlinux-container -f Containerfile .
+docker run --rm -d --name archlinux-container archlinux-container:latest sleep 10000
+docker exec -it archlinux-container /bin/bash
+> aurx install hardened-malloc-git --makepkg-args='--noconfirm -sirc'
+```
 
 ## Examples
 
