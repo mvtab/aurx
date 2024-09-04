@@ -24,51 +24,72 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 operation  | description
 :--------- | :----------
-install    | Clone packages with git and install them with makepkg.
+install    | pretty safe option for installing custom sources.
 remove     | Remove packages from system and the package list.
-update     | Convenient link to install which can be expanded.
-search     | Query the AUR with specific criterias and keywords via RPC.
-completion | Generate completion for the specified shell.
+update     | pretty safe option for installing default sources. (will overwrite and delete existent ones)
+search     | query the AUR with specific criterias and keywords via RPC.
+completion | generate completion for the specified shell.
 
 ## Configuration
 
-#### General
-option            | description                                 | default      | env
-:---------------- | :------------------------------------------ | :----------- | :--
--a, --all         | Include all installed packages.             | false        | AURX_ALL
--f, --force       | Forces the current operation, if appliable. | false        | AURX_FORCE
--h, --help        | Display usage and exit.                     | N/A          | N/A 
--s, --source-path | Work directory.                             | ${HOME}/.src | AURX_SOURCE_PATH
--v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2            | AURX_VERBOSITY
+#### Environment variables
+Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
 
-#### Install, Update
-option                | description                                 | default | env
-:-------------------- | :------------------------------------------ | :------ | :--
--c, --cleanup         | Delete sources after successful installs.   | true    | AURX_CLEANUP
--C, --clean-operation | Delete sources after unsuccessful installs. | false   | AURX_CLEAN_OPERATION
--w, --wipe-existing   | Wipe eventually existing sources.           | false   | AURX_WIPE_EXISTING
+#### General
+option            | description                                 | default      
+:---------------- | :------------------------------------------ | :------ 
+-a, --all         | Include all installed packages.             | false 
+-f, --force       | Forces the current operation, if appliable. | false 
+-h, --help        | Display usage and exit.                     | N/A 
+-s, --source-path | Work directory.                             | ${HOME}/.src 
+-v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2 
+
+#### Install
+option                    | description                                 | default
+:------------------------ | :------------------------------------------ | :------
+-c, --cleanup             | Delete sources after successful installs.   | false
+-C, --clean-operation     | Delete sources after unsuccessful installs. | false
+-M, --makepkg-args        | Args to give in to makepkg installs.        | '-sirc'
+-p, --only-pull           | Only pulls the repository from AUR          | false
+-V, --verify-versions     | compare target versions to installed ones.  | false
+-w, --wipe-existing       | Wipe eventually existing sources.           | false
+-W, --overwrite-existing  | can the existing sources be overwritten     | false
+-x, --comparison-criteria | criteria to use when comparing packages     | "rpc" 
 
 #### Remove
-option            | description                                      | default | env
-:---------------- | :----------------------------------------------- | :------ | :--
--R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'      | AURX_REMOVE_OPTS
+option            | description                                      | default 
+:---------------- | :----------------------------------------------- | :------
+-R, --remove-opts | Opts to give in to pacman for removing packages. | '-R' 
 
 #### Search
-option                | description                        | default      | env
-:-------------------- | :--------------------------------- | :----------- | :--
--r, --search-results  | Number of results to display.      | 20           | AURX_SEARCH_RESULTS
--S, --search-criteria | Criteria to use in search queries. | "name"       | AURX_SEARCH_CRITERIA
--b, --sort-by         | Key to sort results by.            | "popularity" | AURX_SORT_BY
--o, --order-by        | How to order search results.       | "descending" | AURX_ORDER_BY
--O, --no-out-of-date  | Remove all out of date packages.   | false        | AURX_NO_OUT_OF_DATE
--m, --maintained      | Only return maintained packages.   | false        | AURX_MAINTAINED
+option                | description                        | default 
+:-------------------- | :--------------------------------- | :------
+-r, --search-results  | Number of results to display.      | 20
+-S, --search-criteria | Criteria to use in search queries. | "name"
+-b, --sort-by         | Key to sort results by.            | "popularity"
+-o, --order-by        | How to order search results.       | "descending"
+-O, --no-out-of-date  | Remove all out of date packages.   | false
+-m, --maintained      | Only return maintained packages.   | false
+
+#### Update
+option                    | description                        | default 
+:------------------------ | :--------------------------------- | :------
+-B, --block-overwrite     | Don't allow overwriting existing sources. | false
+-k, --keep-sources        | Don't cleanup after successful installs   | false
+-K, --keep-failed-sources | Don't cleanup after unsuccessful installs | false
+-M, --makepkg-args        | Args to give in to makepkg installs.      | '-sirc'
+-x, --comparison-criteria | criteria to use when comparing packages   | "rpc" 
 
 #### Completion
-option                | description                | default | env
-:-------------------- | :------------------------- | :------ | :--
--e, --executable-name | The name of the executable | aurx    | AURX_EXECUTABLE_NAME
+option                | description                | default 
+:-------------------- | :------------------------- | :------ 
+-e, --executable-name | The name of the executable | \${0}
 
 ## Limitations
+
+### Pretty safe
+Do notice the "pretty safe" in install and update's descriptions, which should be a warning.  
+Don't use this script's base dir as sole copy of your work.
 
 ### Non-interactive
 Due to using makepkg's options to check for dependencies and install through pacman, this script can not be run non-interactively.

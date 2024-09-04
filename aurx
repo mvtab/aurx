@@ -8,58 +8,75 @@ usage() {
 		Every option can be set through environment variables but the explicit option has the highest priority.
 		
 		Operations:
-		  install                   Clone packages and install them with makepkg.
-		  remove                    Remove packages from system and the package list.
-		  update                    Convenient link to install which can be expanded.
-		  search                    Query the AUR with specific criterias and keywords via RPC.
-		  completion                Generate completion for the specified shell.
+		  install                   safe option for installing custom sources.
+		  remove                    remove packages from system and the package list.
+		  update                    safe option for installing default sources. (will overwrite existent ones)
+		  search                    query the AUR with specific criterias and keywords via RPC.
+		  completion                generate completion for the specified shell.
 		
 		Options:
 		  general:
-		  -a, --all                 Include all installed packages. (false)
-		  -f, --force               Forces the current operation, where appliable. (false)
-		  -h, --help                Display this information and exit.
-		  -s, --source-path         Work directory for builds and persistent information.(\${HOME}/.src)
-		  -v, --verbosity           Level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
+		  -a, --all                 include all installed packages. (false)
+		  -f, --force               forces the current operation, where appliable. (false)
+		  -h, --help                display this information and exit.
+		  -s, --source-path         work directory for builds and persistent information.(\${HOME}/.src)
+		  -v, --verbosity           level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
 		
-		  install, update:
-		  -c, --cleanup             Delete sources after successful installs. (true)
-		  -C, --clean-operation     Delete sources after unsucessful installs. (false)
-		  -w, --wipe-existing       Wipe eventually existing sources. (false)
+		  install:
+		  -c, --cleanup             delete sources after successful installs. (false)
+		  -C, --clean-operation     delete sources after unsucessful installs. (false)
+		  -M, --makepkg-args        args to give in to makepkg installs. ('-sirc')
+		  -p, --only-pull           only pulls the repository from AUR. (false)
+		  -V, --verify-versions     compare target versions to installed ones. (false)
+		  -w, --wipe-existing       wipe eventually existing sources. (false)
+		  -W, --overwrite-existing  can the existing sources be overwritten. (false)
+		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
 
 		  remove:
-		  -R, --remove-opts         Opts to give in to pacman for removing package. ('-R')
+		  -R, --remove-opts         opts to give in to pacman for removing package. ('-R')
 
 		  search:
-		  -r, --search-results      Number of results to display from search queries. (20)
-		  -S, --search-criteria     Criteria to use in search queries. ("name")
-		  -b, --sort-by             Key to sort results by. ("popularity")
-		  -o, --order-by            How to order search results. ("descending")
-		  -O, --no-out-of-date      Remove all out of date packages. (false)
-		  -m, --maintained          Only return maintained packages. (false)
+		  -r, --search-results      number of results to display from search queries. (20)
+		  -S, --search-criteria     criteria to use in search queries. ("name")
+		  -b, --sort-by             key to sort results by. ("popularity")
+		  -o, --order-by            how to order search results. ("descending")
+		  -O, --no-out-of-date      remove all out of date packages. (false)
+		  -m, --maintained          only return maintained packages. (false)
+		
+		  update:
+		  -B, --block-overwrite     don't allow overwriting existing sources. (false)
+		  -k, --keep-sources        don't cleanup after successful updates. (false)
+		  -K, --keep-failed-sources don't cleanup after unsuccessfulupdates. (false)
+		  -M, --makepkg-args        args to give in to makepkg installs. ('-sirc')
+		  -W, --do-not-wipe         don't remove existing sources. (false)
+		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
 
 		  completion:
-		  -e, --executable-name     The name of the executable to be used for completion. ("aurx")
+		  -e, --executable-name     the name of the executable to be used for completion. ("aurx")
 		
 		Environment variables:
-		  AURX_ALL, AURX_CLEANUP, AURX_CLEAN_OPERATION, AURX_EXECUTABLE_NAME, AURX_FORCE, AURX_SEARCH_RESULTS, 
-		  AURX_REMOVE_OPTS, AURX_SOURCE_PATH, AURX_SEARCH_CRITERIA, AURX_VERBOSITY, AURX_WIPE_EXISTING.
+		  Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
 	EOF
 }
 
 print_error() {
-	local GIVEN_ERROR=${1}
+	local GIVEN_ERROR="${1}"
 
 	case "${GIVEN_ERROR}" in
 		10 )
+			echo "[!] Could not remove files for target: \"${SELECTED_PACKAGE}\"."
+			echo "[i] Check file permissions."
 			;;
 		11 )
-			echo "[!] Could not clone git repository of \"${SELECTED_PACKAGE}\"."
+			echo "[!] Could not pull repository: \"${SELECTED_PACKAGE}\"."
 			;;
 		12 )
-			echo "[!] Could not build \"${SELECTED_PACKAGE}\"."
+			echo "[!] Could not clone git repository of \"${SELECTED_PACKAGE}\"."
 			;;
 		13 )
+			echo "[!] Could not build \"${SELECTED_PACKAGE}\"."
+			;;
+		14 )
 			echo "[!] Could not write \"${SELECTED_PACKAGE}\" to the package_list."
 			;;
 		20 )
@@ -69,8 +86,6 @@ print_error() {
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
 		30 )
-			;;
-		31 )
 			echo "[!] Could not update \"${SELECTED_PACKAGE}\"."
 			;;
 		40 )
@@ -90,7 +105,7 @@ print_error() {
 			echo "[-] No operation selected. Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
 		55 )
-			echo "[-] Unknown operation: \"${1}\". Possible options are: ${POSSIBLE_OPERATIONS[*]}."
+			echo "[-] Unknown operation: \"${CURRENT_OPERATION}\". Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
 		56 )
 			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
@@ -127,6 +142,16 @@ print_error() {
 		66)
 			echo "[-] Unknown order-by value: \"${ORDER_BY}\"."
 			echo "[i] Possible options are: ascending, descending."
+			;;
+		67)
+			echo "[-] Could not pull repository: \"${SELECTED_PACKAGE}\"."
+			;;
+		68)
+			echo "[-] Unknown comparison criteria: \"${COMPARISON_CRITERIA}\"."
+			echo "[i] Possible options are: pkgbuild, rpc."
+			;;
+		70)
+			echo "[-] Could not find PKGBUILD for \"${SELECTED_PACKAGE}\" with comparison criteria \"pkgbuild\"."
 			;;
 		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
@@ -193,13 +218,38 @@ aurx-completion() {
 
 compare-versions() {
 	local TARGET_PACKAGE="${1}"
-	local LATEST_VERSION
-	LATEST_VERSION=$(curl \
-		"https://aur.archlinux.org/rpc/v5/info?arg[]=${TARGET_PACKAGE}" 2> /dev/null \
-		| jq -r .results.[0].Version)
+
 	local INSTALLED_VERSION
 	INSTALLED_VERSION=$(sudo pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null \
 		| grep -e "Version" | awk '{ print $3 }')
+
+	case "${COMPARISON_CRITERIA}" in
+		pkgbuild )
+			if [[ ! -f "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"/PKGBUILD ]]; then
+				print_error 70
+				exit 70
+			fi
+			local LATEST_VERSION
+			local PKGVER
+			local PKGREL
+			PKGVER=$(cat "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD" \
+				| sed -n 's/pkgver=\(.*\)/\1/p')
+			PKGREL=$(cat "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD" \
+				| sed -n 's/pkgrel=\(.*\)/\1/p')
+			LATEST_VERSION="${PKGVER}-${PKGREL}"
+			;;
+		rpc )
+			local LATEST_VERSION
+			LATEST_VERSION=$(curl \
+				"https://aur.archlinux.org/rpc/v5/info?arg[]=${TARGET_PACKAGE}" 2> /dev/null \
+				| jq -r .results.[0].Version)
+			;;
+		* )
+			print_error 68
+			exit 68
+			;;
+	esac
+
 	if [[ "${LATEST_VERSION}" == "${INSTALLED_VERSION}" ]] && ! ${FORCE}; then
 		return 1
 	fi
@@ -208,15 +258,32 @@ compare-versions() {
 
 clone-git-repo() {
 	local TARGET_PACKAGE="${1}"
-	if [[ -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]] && ${WIPE_EXISTING}; then
-		rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
-	fi
 	if ! pushd "${SOURCE_PATH:?Source path not defined.}" 1> /dev/null; then
 		print_error 63
 		exit 63
 	fi
-	git clone "https://aur.archlinux.org/${TARGET_PACKAGE}.git" 2> /dev/null
+	git clone "https://aur.archlinux.org/${TARGET_PACKAGE}.git"
 	if [[ -z $(ls "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}") ]]; then
+		if ! popd 1> /dev/null; then
+			print_error 64
+			exit 64
+		fi
+		return 1
+	fi
+	if ! popd 1> /dev/null; then
+		print_error 64
+		exit 64
+	fi
+	return 0
+}
+
+pull-git-repo() {
+	local TARGET_PACKAGE="${1}"
+	if ! pushd "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" 1> /dev/null; then
+		print_error 63
+		exit 63
+	fi
+	if ! git pull; then
 		if ! popd 1> /dev/null; then
 			print_error 64
 			exit 64
@@ -236,23 +303,16 @@ build-makepkg-package() {
 		print_error 63
 		exit 63
 	fi
-	if ! makepkg -sirc; then
+	if ! makepkg "${MAKEPKG_ARGS}"; then
 		if ! popd 1> /dev/null; then
 			print_error 64
 			exit 64
-		fi
-		if ${CLEAN_OPERATION}; then
-			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
 		fi
 		return 1
 	fi
 	if ! popd 1> /dev/null; then
 		print_error 64
 		exit 64
-	fi
-
-	if ${CLEANUP}; then
-		rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"
 	fi
 }
 
@@ -327,14 +387,38 @@ aur-rpc-suggest() {
 
 install-aur-package() {
 	local TARGET_PACKAGE="${1}"
-	
-	compare-versions "${TARGET_PACKAGE}" || return 0
 
-	clone-git-repo "${TARGET_PACKAGE}" || return 11
+	if ${VERIFY_VERSIONS}; then
+		compare-versions "${TARGET_PACKAGE}" || return 0
+	fi
 
-	build-makepkg-package "${TARGET_PACKAGE}" || return 12
+	if [[ -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]]; then
+		if ${WIPE_EXISTING}; then
+			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+		elif ${OVERWRITE_EXISTING} && [[ "${COMPARISON_CRITERIA}" == "rpc" ]]; then
+			pull-git-repo "${TARGET_PACKAGE}" || return 11
+		fi
+	fi
+	if [[ ! -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]]; then
+		clone-git-repo "${TARGET_PACKAGE}" || return 12
+	fi
+
+	if ${ONLY_PULL}; then
+		return 0
+	fi
+
+	if build-makepkg-package "${TARGET_PACKAGE}"; then
+		if ${CLEANUP}; then
+			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+		fi
+	else
+		if ${CLEAN_OPERATION}; then
+			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+		fi
+		return 13
+	fi
 	
-	write-package-list "${TARGET_PACKAGE}" || return 13
+	write-package-list "${TARGET_PACKAGE}" || return 14
 
 	return 0
 }
@@ -350,10 +434,21 @@ remove-aur-package() {
 }
 
 update-aur-package() {
-	local TARGET_PACKAGE=${1}
+	local TARGET_PACKAGE="${1}"
+	local VERIFY_VERSIONS=true
 
-	install-aur-package "${TARGET_PACKAGE}" || return 31
-	
+	if ! ${KEEP_SOURCES}; then
+		local CLEANUP=true
+	fi
+	if ! ${KEEP_FAILED_SOURCES}; then
+		local CLEAN_OPERATION=true
+	fi
+	if ! ${BLOCK_OVERWRITE}; then
+		local OVERWRITE_EXISTING=true
+	fi
+
+	install-aur-package "${TARGET_PACKAGE}" || return 30
+
 	return 0
 }
 
@@ -386,44 +481,51 @@ fi
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
 GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-w" "--wipe-existing")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-p" "--only-pull" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-args" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
-UPDATE_OPTIONS=( "${INSTALL_OPTIONS[*]}" )
+UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-args")
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 AVAILABLE_COMPLETIONS=("bash")
 
 # Variables.
-FORCE=${AURX_FORCE:-false}
-VERBOSITY=${AURX_VERBOSITY:-2}
-CLEANUP=${AURX_CLEANUP:-true}
+ALL=${AURX_ALL:-false}
+BLOCK_OVERWRITE=${AURX_BLOCK_OVERWRITE:-false}
+CLEANUP=${AURX_CLEANUP:-false}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
-WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+COMPARISON_CRITERIA=${AURX_COMPARISON_CRITERIA:-rpc}
+EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-${0}}
+FORCE=${AURX_FORCE:-false}
+KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
+KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
+MAINTAINED=${AURX_MAINTAINED:-false}
+MAKEPKG_ARGS=${AURX_MAKEPKG_ARGS:--sirc}
+NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
+ONLY_PULL=${AURX_ONLY_PULL:-false}
+ORDER_BY=${AURX_ORDER_BY:-descending}
+OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
+REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
-ALL=${AURX_ALL:-false}
-REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
-EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
 SORT_BY=${AURX_SORT_BY:-popularity}
-ORDER_BY=${AURX_ORDER_BY:-descending}
-NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
-MAINTAINED=${AURX_MAINTAINED:-false}
+SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.src}"
+VERBOSITY=${AURX_VERBOSITY:-2}
+VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
+WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
 
 # Options.
-LONGOPTS=source-path:,verbosity:,force,help,cleanup,clean-operation,wipe-existing,search-criteria:,search-results:,all,remove-opts:,executable-name:,sort-by:,order-by:,no-out-of-date,maintained
-OPTIONS=s:v:fhcCwS:r:aR:e:b:o:Om
-if ! PARSED_OPTIONS=$(getopt --options=${OPTIONS} --longoptions=${LONGOPTS} --name "${0}" -- "${@}"); then
+LONGOPTS=''
+LONGOPTS+='all,block-overwrite,cleanup,clean-operation,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,only-pull,overwrite-existing,verify-versions,wipe-existing'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-args:,order-by:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+OPTIONS=''
+OPTIONS+='aBcCfhkKmOpVwW'
+OPTIONS+='b:e:M:o:r:R:s:S:v:x:'
+if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
 fi
 
 eval set -- "${PARSED_OPTIONS}"
-
-if [[ -z ${SUDO_USER+x} ]]; then
-	SOURCE_PATH="${HOME}/.src"
-else
-	SOURCE_PATH="/home/${SUDO_USER}/.src"
-fi
 
 while true; do
 	case "${1}" in
@@ -438,6 +540,10 @@ while true; do
 				exit 65
 			fi
 			shift 2
+			;;
+		-B|--block-overwrite )
+			BLOCK_OVERWRITE=true
+			shift
 			;;
 		-c|--cleanup )
 			CLEANUP=true
@@ -459,9 +565,21 @@ while true; do
 			usage
 			exit 0
 			;;
+		-k|--keep-sources )
+			KEEP_SOURCES=true
+			shift
+			;;
+		-K|--keep-failed-sources )
+			KEEP_FAILED_SOURCES=true
+			shift
+			;;
 		-m|--maintained )
 			MAINTAINED=true
 			shift
+			;;
+		-M|--makepkg-args )
+			MAKEPKG_ARGS="${2}"
+			shift 2
 			;;
 		-o|--order-by )
 			ORDER_BY="${2}"
@@ -473,6 +591,10 @@ while true; do
 			;;
 		-O|--no-out-of-date )
 			NO_OUT_OF_DATE=true
+			shift
+			;;
+		-p|--only-pull )
+			ONLY_PULL=true
 			shift
 			;;
 		-r|--search-results )
@@ -499,9 +621,25 @@ while true; do
 			VERBOSITY="${2}"
 			shift 2
 			;;
+		-V|--verify-versions )
+			VERIFY_VERSIONS=true
+			shift
+			;;
 		-w|--wipe-existing )
 			WIPE_EXISTING=true
 			shift
+			;;
+		-W|--overwrite-existing )
+			OVERWRITE_EXISTING=true
+			shift
+			;;
+		-x|--comparison-criteria )
+			COMPARISON_CRITERIA="${2}"
+			if [[ ! " rpc pkgbuild " =~ ${COMPARISON_CRITERIA} ]]; then
+				print_error 68
+				exit 68
+			fi
+			shift 2
 			;;
 		-- )
 			shift
@@ -520,13 +658,14 @@ done
 if [[ ${#} -eq 0 ]]; then
 	print_error 54
 	exit 54
-elif [[ ! ${POSSIBLE_OPERATIONS[*]} =~ (^|[[:space:]])"${1}"($|[[:space:]]) ]]; then
+fi
+CURRENT_OPERATION="${1}"
+if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 	print_error 55
 	exit 55
 fi
-CURRENT_OPERATION=${1}
 shift
-if [[ ${#} -eq 0 ]] && [[ " install remove search " =~ ${CURRENT_OPERATION} ]] && ! ${ALL}; then
+if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 56
 	exit 56
 fi
@@ -538,7 +677,7 @@ if [[ ${UID} -eq 0 ]] && [[ " install update " =~ ${CURRENT_OPERATION} ]]; then
 fi
 
 # Verbosity.
-case ${VERBOSITY} in
+case "${VERBOSITY}" in
 	0 ) 
 		STDOUT_DESTINATION=/dev/null
 		STDERR_DESTINATION=/dev/null
@@ -584,7 +723,7 @@ if ${ALL}; then
 	done < "${SOURCE_PATH:?Source path not defined.}"/package_list
 fi
 
-case ${CURRENT_OPERATION} in
+case "${CURRENT_OPERATION}" in
 	install | update )
 		REQUIRED_PACKAGES=('curl' 'jq' 'git' 'makepkg' 'pacman')
 		;;
