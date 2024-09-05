@@ -114,7 +114,7 @@ aurx install test --only-pull --source-path /tmp
 cd /tmp/test
 # modifications
 cd -
-aurx install test
+aurx install test --source-path /tmp
 ```
 
 ##### Update a package only if the present source's version is higher than the installed one.
