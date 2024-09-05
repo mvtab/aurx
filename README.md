@@ -3,7 +3,7 @@ The Archlinux User Repository eXplorer.
 
 ## Motivation
 This script strides to be a lightweight AUR helper that takes on AUR-related tasks and nothing more.  
-It also offers the freedom to manipulate and keep track of all kinds of sources: self maintained or online ones.  
+It also offers the freedom to manipulate and keep track of all kinds of sources: self maintained or online ones. Theoretically it could be expanded to offer upload functionality to AUR.  
 
 ## Installation
 ```
