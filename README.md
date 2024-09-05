@@ -28,9 +28,9 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 operation  | description
 :--------- | :----------
-install    | pretty safe option for installing custom sources.
+install    | designated option for comfortably managing custom sources.
 remove     | Remove packages from system and the package list.
-update     | pretty safe option for installing default sources. (will overwrite and delete existent ones)
+update     | designated option for installing online packages using `/tmp` as workdir.
 search     | query the AUR with specific criterias and keywords via RPC.
 completion | generate completion for the specified shell.
 
@@ -53,7 +53,7 @@ option                    | description                                 | defaul
 :------------------------ | :------------------------------------------ | :------ | :-----
 -c, --cleanup             | Delete sources after successful installs.   | false   | true, false
 -C, --clean-operation     | Delete sources after unsuccessful installs. | false   | true, false
--M, --makepkg-args        | Args to give in to makepkg installs.        | '-sirc' | any makepkg args
+-M, --makepkg-opts        | Opts to give in to makepkg installs.        | '-sirc' | any makepkg opts
 -p, --only-pull           | Only pulls the repository from AUR          | false   | true, false
 -V, --verify-versions     | compare target versions to installed ones.  | false   | true, false
 -w, --wipe-existing       | Wipe eventually existing sources.           | false   | true, false
@@ -63,7 +63,7 @@ option                    | description                                 | defaul
 #### Remove
 option            | description                                      | default | values
 :---------------- | :----------------------------------------------- | :------ | :-----
--R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'    | any pacman args
+-R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'    | any pacman opts
 
 #### Update
 option                    | description                               | default | values
@@ -71,7 +71,7 @@ option                    | description                               | default 
 -B, --block-overwrite     | Don't allow overwriting existing sources. | false   | true, false
 -k, --keep-sources        | Don't cleanup after successful installs   | false   | true, false
 -K, --keep-failed-sources | Don't cleanup after unsuccessful installs | false   | true, false
--M, --makepkg-args        | Args to give in to makepkg installs.      | '-sirc' | any makepkg args
+-M, --makepkg-opts        | Opts to give in to makepkg installs.      | '-sirc' | any makepkg opts
 -x, --comparison-criteria | criteria to use when comparing packages   | "rpc"   | "rpc", "pkgbuild"
 
 #### Search
@@ -93,12 +93,12 @@ option                | description                | default | values
 There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
 
 #### Non-interactive
-Script can be ran noninteractively by changing the makepkg args (`-M`, `--makepkg-args`) to, for example, `'--noconfirm -sirc'`.  
+Script can be ran noninteractively by changing the makepkg opts (`-M`, `--makepkg-opts`) to, for example, `'--noconfirm -sirc'`.  
 `sudo` password must be handled by the user. (see Limitations)
 
 ## Examples
 
-##### Install a new package.
+##### Install a new package or an existing source.
 ```bash
 aurx install test
 ```
@@ -158,8 +158,7 @@ source <(aurx completion bash --executable-name aurx)
 
 ## Limitations
 
-### Pretty safe
-Do notice the "pretty safe" in install and update's descriptions, which should be a warning.  
+### Not intensively tested
 Don't use this script's base dir as sole copy of your work.
 
 ### Sudo password
@@ -168,8 +167,6 @@ This script intentionally does not handle sudo passwords in any way.
 Wokarounds:  
 You can increase the default duration of a sudo session by changing the `Defaults timestamp_timeout` in `/etc/sudoers`.  
 Additionally or alternatively, you can refresh the sudo timeout every time you execute sudo by adding `alias sudo='sudo -v; sudo'` to your .bashrc.  
-
-An extreme way to overcome this is giving your user NOPASSWD sudo privileges, which is highly insecure and not adviced even in test labs.
 
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  

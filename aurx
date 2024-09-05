@@ -25,7 +25,7 @@ usage() {
 		  install:
 		  -c, --cleanup             delete sources after successful installs. (false)
 		  -C, --clean-operation     delete sources after unsucessful installs. (false)
-		  -M, --makepkg-args        args to give in to makepkg installs. ('-sirc')
+		  -M, --makepkg-opts        opts to give in to makepkg installs. ('-sirc')
 		  -p, --only-pull           only pulls the repository from AUR. (false)
 		  -V, --verify-versions     compare target versions to installed ones. (false)
 		  -w, --wipe-existing       wipe eventually existing sources. (false)
@@ -47,7 +47,7 @@ usage() {
 		  -B, --block-overwrite     don't allow overwriting existing sources. (false)
 		  -k, --keep-sources        don't cleanup after successful updates. (false)
 		  -K, --keep-failed-sources don't cleanup after unsuccessfulupdates. (false)
-		  -M, --makepkg-args        args to give in to makepkg installs. ('-sirc')
+		  -M, --makepkg-opts        opts to give in to makepkg installs. ('-sirc')
 		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
 
 		  completion:
@@ -300,7 +300,7 @@ build-makepkg-package() {
 		print_error 63
 		exit 63
 	fi
-	if ! makepkg ${MAKEPKG_ARGS}; then
+	if ! makepkg "${MAKEPKG_OPTS[@]}"; then
 		if ! popd 1> /dev/null; then
 			print_error 64
 			exit 64
@@ -316,7 +316,7 @@ build-makepkg-package() {
 remove-from-system() {
 	local TARGET_PACKAGE="${1}"
 	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2>/dev/null) ]]; then
-		sudo pacman "${REMOVE_OPTS}" "${TARGET_PACKAGE}"
+		sudo pacman "${REMOVE_OPTS[@]}" "${TARGET_PACKAGE}"
 	else
 		return 0
 	fi
@@ -328,7 +328,7 @@ remove-from-system() {
 
 remove-from-package-list() {
 	local TARGET_PACKAGE="${1}"
-	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list 2> /dev/null; then
 		sed -i "/^${TARGET_PACKAGE}$/d" "${SOURCE_PATH:?Source path not defined.}"/package_list
 	else
 		return 0
@@ -341,7 +341,7 @@ remove-from-package-list() {
 
 write-package-list() {
 	local TARGET_PACKAGE="${1}"
-	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list 2> /dev/null; then
 		echo "${TARGET_PACKAGE}" | tee -a "${SOURCE_PATH:?Source path not defined.}"/package_list 1> /dev/null
 	fi
 	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
@@ -432,6 +432,7 @@ remove-aur-package() {
 
 update-aur-package() {
 	local TARGET_PACKAGE="${1}"
+	local SOURCE_PATH='/tmp'
 	local VERIFY_VERSIONS=true
 
 	if ! ${KEEP_SOURCES}; then
@@ -478,9 +479,9 @@ fi
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
 GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-p" "--only-pull" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-args" "-V" "--verify-versions")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-p" "--only-pull" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
-UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-args")
+UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 AVAILABLE_COMPLETIONS=("bash")
@@ -496,12 +497,10 @@ FORCE=${AURX_FORCE:-false}
 KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
 MAINTAINED=${AURX_MAINTAINED:-false}
-MAKEPKG_ARGS=${AURX_MAKEPKG_ARGS:--sirc}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ONLY_PULL=${AURX_ONLY_PULL:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
-REMOVE_OPTS=${AURX_REMOVE_OPTS:--R}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 SORT_BY=${AURX_SORT_BY:-popularity}
@@ -509,11 +508,27 @@ SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.src}"
 VERBOSITY=${AURX_VERBOSITY:-2}
 VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+declare -a MAKEPKG_OPTS
+if [[ -n "${AURX_MAKEPKG_OPTS}" ]]; then
+	for OPT in ${AURX_MAKEPKG_OPTS}; do
+		MAKEPKG_OPTS+=("${OPT}")
+	done
+else
+	MAKEPKG_OPTS=('-sirc')
+fi
+declare -a REMOVE_OPTS
+if [[ -n "${AURX_REMOVE_OPTS}" ]]; then
+	for OPT in ${AURX_REMOVE_OPTS}; do
+		REMOVE_OPTS+=("${OPT}")
+	done
+else
+	REMOVE_OPTS=('-R')
+fi
 
 # Options.
 LONGOPTS=''
 LONGOPTS+='all,block-overwrite,cleanup,clean-operation,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,only-pull,overwrite-existing,verify-versions,wipe-existing'
-LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-args:,order-by:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCfhkKmOpVwW'
 OPTIONS+='b:e:M:o:r:R:s:S:v:x:'
@@ -574,8 +589,11 @@ while true; do
 			MAINTAINED=true
 			shift
 			;;
-		-M|--makepkg-args )
-			MAKEPKG_ARGS="${2}"
+		-M|--makepkg-opts )
+			MAKEPKG_OPTS=()
+			for OPT in ${2}; do
+				MAKEPKG_OPTS+=("${OPT}")
+			done
 			shift 2
 			;;
 		-o|--order-by )
@@ -599,7 +617,10 @@ while true; do
 			shift 2
 			;;
 		-R|--remove-opts )
-			REMOVE_OPTS="${2}"
+			REMOVE_OPTS=()
+			for OPT in ${2}; do
+				REMOVE_OPTS+=("${OPT}")
+			done
 			shift 2
 			;;
 		-s|--source-path )
