@@ -16,7 +16,8 @@ ln -sf ${PWD}/aurx ~/bin/aurx
 aurx --help
 
 # Optional.
-source <(aurx completion bash)
+source <(aurx completion bash --executable-name aurx)
+# or '--executable-name ./aurx' if you did not do a soft link.
 ```
 
 ## Usage
@@ -126,14 +127,14 @@ aurx install test --verify-versions --comparison-criteria pkgbuild
 ```bash
 aurx update test
 # equivalent of
-aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation
+aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp # with package_list from original source-path
 ```
 
 ##### Update all installed packages.
 ```bash
 aurx update --all
 # equivalent of 
-aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation
+aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp # with package_list from original source-path
 ```
 
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
