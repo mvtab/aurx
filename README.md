@@ -12,12 +12,12 @@ cd aurx/
 chmod +111 ./aurx
 
 # Optional.
-ln -sf ${PWD}/aurx ~/bin/aurx
-aurx --help
 
-# Optional.
+## Soft link.
+ln -sf ${PWD}/aurx ~/bin/aurx
+
+## Completion.
 source <(aurx completion bash --executable-name aurx)
-# or '--executable-name ./aurx' if you did not do a soft link.
 ```
 
 ## Usage
