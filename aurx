@@ -25,8 +25,8 @@ usage() {
 		  install:
 		  -c, --cleanup             delete sources after successful installs. (false)
 		  -C, --clean-operation     delete sources after unsucessful installs. (false)
+		  -d, --download-only       only downloads the repository from AUR. (false)
 		  -M, --makepkg-opts        opts to give in to makepkg installs. ('-sirc')
-		  -p, --only-pull           only pulls the repository from AUR. (false)
 		  -V, --verify-versions     compare target versions to installed ones. (false)
 		  -w, --wipe-existing       wipe eventually existing sources. (false)
 		  -W, --overwrite-existing  can the existing sources be overwritten. (false)
@@ -400,7 +400,7 @@ install-aur-package() {
 		clone-git-repo "${TARGET_PACKAGE}" || return 12
 	fi
 
-	if ${ONLY_PULL}; then
+	if ${DOWNLOAD_ONLY}; then
 		return 0
 	fi
 
@@ -479,7 +479,7 @@ fi
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
 GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-p" "--only-pull" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
@@ -492,13 +492,13 @@ BLOCK_OVERWRITE=${AURX_BLOCK_OVERWRITE:-false}
 CLEANUP=${AURX_CLEANUP:-false}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
 COMPARISON_CRITERIA=${AURX_COMPARISON_CRITERIA:-rpc}
+DOWNLOAD_ONLY=${AURX_DOWNLOAD_ONLY:-false}
 EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-${0}}
 FORCE=${AURX_FORCE:-false}
 KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
 MAINTAINED=${AURX_MAINTAINED:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
-ONLY_PULL=${AURX_ONLY_PULL:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
@@ -527,10 +527,10 @@ fi
 
 # Options.
 LONGOPTS=''
-LONGOPTS+='all,block-overwrite,cleanup,clean-operation,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,only-pull,overwrite-existing,verify-versions,wipe-existing'
+LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
 LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
-OPTIONS+='aBcCfhkKmOpVwW'
+OPTIONS+='aBcCdfhkKmOVwW'
 OPTIONS+='b:e:M:o:r:R:s:S:v:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
@@ -563,6 +563,10 @@ while true; do
 			;;
 		-C|--clean-operation )
 			CLEAN_OPERATION=true
+			shift
+			;;
+		-d|--download-only )
+			DOWNLOAD_ONLY=true
 			shift
 			;;
 		-e|--executable-name )
@@ -606,10 +610,6 @@ while true; do
 			;;
 		-O|--no-out-of-date )
 			NO_OUT_OF_DATE=true
-			shift
-			;;
-		-p|--only-pull )
-			ONLY_PULL=true
 			shift
 			;;
 		-r|--search-results )

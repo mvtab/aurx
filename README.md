@@ -55,7 +55,7 @@ option                    | description                                 | defaul
 -c, --cleanup             | Delete sources after successful installs.   | false   | true, false
 -C, --clean-operation     | Delete sources after unsuccessful installs. | false   | true, false
 -M, --makepkg-opts        | Opts to give in to makepkg installs.        | '-sirc' | any makepkg opts
--p, --only-pull           | Only pulls the repository from AUR          | false   | true, false
+-d, --download-only       | Only downloads the repository from AUR.     | false   | true, false
 -V, --verify-versions     | compare target versions to installed ones.  | false   | true, false
 -w, --wipe-existing       | Wipe eventually existing sources.           | false   | true, false
 -W, --overwrite-existing  | can the existing sources be overwritten     | false   | true, false
@@ -111,7 +111,7 @@ aurx remove test --remove-opts '-Rsncu'
 
 ##### Download a package to modify before install.
 ```bash
-aurx install test --only-pull --source-path /tmp
+aurx install test --download-only --source-path /tmp
 cd /tmp/test
 # modifications
 cd -
