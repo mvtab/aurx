@@ -165,6 +165,7 @@ aurx-completion() {
 			cat <<- EOS
 				_aurx-completion() {
 					local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
+				        local LAST_WORD="\${COMP_WORDS[COMP_CWORD-1]}"
 					COMPREPLY=()
 				        local POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[*]}"
 				        local GENERAL_OPTIONS="${GENERAL_OPTIONS[*]}"
@@ -174,6 +175,10 @@ aurx-completion() {
 				        local SEARCH_OPTIONS="${SEARCH_OPTIONS[*]}"
 				        local COMPLETION_OPTIONS="${COMPLETION_OPTIONS[*]}"
 				        local AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[*]}"
+				        local SEARCH_CRITERIA_VALUES="${SEARCH_CRITERIA_VALUES[*]}"
+				        local COMPARISON_CRITERIA_VALUES="${COMPARISON_CRITERIA_VALUES[*]}"
+				        local SORT_BY_VALUES="${SORT_BY_VALUES[*]}"
+				        local ORDER_BY_VALUES="${ORDER_BY_VALUES[*]}"
 				        
 				        if [[ \${CURRENT_WORD} == -* ]]; then
 				                COMPREPLY=( \$(compgen -W "\${GENERAL_OPTIONS}" -- "\${CURRENT_WORD}") )
@@ -188,16 +193,22 @@ aurx-completion() {
 				        	elif [[ \${COMP_WORDS[*]} =~ " completion " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                fi
-				        else
-				                if [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
-				                elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH:?Source path not defined.}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
-				                elif [[ ! -z \$(echo \${COMP_WORDS[*]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
-				                        COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
-				                fi
+				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
+				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--search-criteria" ]]; then
+				                COMPREPLY=( \$(compgen -W "\${SEARCH_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--comparison-criteria" ]]; then
+				                COMPREPLY=( \$(compgen -W "\${COMPARISON_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--order-by" ]]; then
+				                COMPREPLY=( \$(compgen -W "\${ORDER_BY_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--sort-by" ]]; then
+				                COMPREPLY=( \$(compgen -W "\${SORT_BY_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				                COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
+				                COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH:?Source path not defined.}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
+				                COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
 				        fi
 
 				        for PLANNED_REPLY in \${COMPREPLY[*]}; do
@@ -485,6 +496,10 @@ UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 AVAILABLE_COMPLETIONS=("bash")
+SEARCH_CRITERIA_VALUES=("name" "name-desc" "maintainer" "depends" "makedepends" "optdepends" "checkdepends" "suggest")
+COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
+SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
+ORDER_BY_VALUES=("ascending" "descending")
 
 # Variables.
 ALL=${AURX_ALL:-false}
@@ -547,7 +562,7 @@ while true; do
 			;;
 		-b|--sort-by )
 			SORT_BY="${2}"
-			if [[ ! " firstsubmitted lastmodified votes popularity " =~ ${SORT_BY} ]]; then
+			if [[ ! "${SORT_BY_VALUES[*]}" =~ ${SORT_BY} ]]; then
 				print_error 65
 				exit 65
 			fi
@@ -602,7 +617,7 @@ while true; do
 			;;
 		-o|--order-by )
 			ORDER_BY="${2}"
-			if [[ ! " ascending descending " =~ ${ORDER_BY} ]]; then
+			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
 				print_error 66
 				exit 66
 			fi
@@ -629,7 +644,7 @@ while true; do
 			;;
 		-S|--search-criteria )
 			SEARCH_CRITERIA="${2}"
-			if [[ ! " name name-desc maintainer depends makedepends optdepends checkdepends suggest " =~ ${SEARCH_CRITERIA} ]]; then
+			if [[ ! "${SEARCH_CRITERIA_VALUES[*]}" =~ ${SEARCH_CRITERIA} ]]; then
 				print_error 52
 				exit 52
 			fi
@@ -653,7 +668,7 @@ while true; do
 			;;
 		-x|--comparison-criteria )
 			COMPARISON_CRITERIA="${2}"
-			if [[ ! " rpc pkgbuild " =~ ${COMPARISON_CRITERIA} ]]; then
+			if [[ ! "${COMPARISON_CRITERIA_VALUES[*]}" =~ ${COMPARISON_CRITERIA} ]]; then
 				print_error 68
 				exit 68
 			fi
