@@ -779,7 +779,7 @@ case "${CURRENT_OPERATION}" in
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	completion )
-		REQUIRED_PACKAGES=('curl' 'echo' 'jq' 'bash-completion')
+		REQUIRED_PACKAGES=('curl' 'echo' 'jq' '_filedir')
 		;;
 	* )
 		print_error 55
