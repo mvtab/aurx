@@ -217,7 +217,7 @@ Every tab does one request.
 ## Changelog
 
 
-### 09.16.2024 Breaking changes - Default source directory changed.
+### 2024.09.16 Breaking changes - Default source directory changed.
 While adding the --persistent-path configuration option, I also refactored and changed the default work directory for more scalability.
 To migrate any old data simply copy it to these locations:
 ```
