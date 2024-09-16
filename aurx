@@ -19,7 +19,8 @@ usage() {
 		  -a, --all                 include all installed packages. (false)
 		  -f, --force               forces the current operation, where appliable. (false)
 		  -h, --help                display this information and exit.
-		  -s, --source-path         work directory for builds and persistent information.(\${HOME}/.src)
+		  -p, --persistent-path     where to save persistent information like the package list. (\${SOURCE_PATH})
+		  -s, --source-path         work directory for builds.(\${HOME}/.src)
 		  -v, --verbosity           level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
 		
 		  install:
@@ -193,8 +194,6 @@ aurx-completion() {
 				        	elif [[ \${COMP_WORDS[*]} =~ " completion " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                fi
-				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
-				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--search-criteria" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SEARCH_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--comparison-criteria" ]]; then
@@ -203,10 +202,14 @@ aurx-completion() {
 				                COMPREPLY=( \$(compgen -W "\${ORDER_BY_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--sort-by" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SORT_BY_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]]; then
+				                cur=\${CURRENT_WORD} _filedir
+				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
+				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
-				                COMPREPLY=( \$(compgen -W "\$(cat ${SOURCE_PATH:?Source path not defined.}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				                COMPREPLY=( \$(compgen -W "\$(cat ${PERSISTENT_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${AVAILABLE_COMPLETIONS}" -- "\${CURRENT_WORD}") )
 				        fi
@@ -235,7 +238,7 @@ compare-versions() {
 
 	case "${COMPARISON_CRITERIA}" in
 		pkgbuild )
-			if [[ ! -f "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}"/PKGBUILD ]]; then
+			if [[ ! -f "${SOURCE_PATH}"/"${TARGET_PACKAGE}"/PKGBUILD ]]; then
 				print_error 70
 				exit 70
 			fi
@@ -266,12 +269,12 @@ compare-versions() {
 
 clone-git-repo() {
 	local TARGET_PACKAGE="${1}"
-	if ! pushd "${SOURCE_PATH:?Source path not defined.}" 1> /dev/null; then
+	if ! pushd "${SOURCE_PATH}" 1> /dev/null; then
 		print_error 63
 		exit 63
 	fi
 	git clone "https://aur.archlinux.org/${TARGET_PACKAGE}.git"
-	if [[ -z $(ls "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}") ]]; then
+	if [[ -z $(ls "${SOURCE_PATH}"/"${TARGET_PACKAGE}") ]]; then
 		if ! popd 1> /dev/null; then
 			print_error 64
 			exit 64
@@ -287,7 +290,7 @@ clone-git-repo() {
 
 pull-git-repo() {
 	local TARGET_PACKAGE="${1}"
-	if ! pushd "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" 1> /dev/null; then
+	if ! pushd "${SOURCE_PATH}"/"${TARGET_PACKAGE}" 1> /dev/null; then
 		print_error 63
 		exit 63
 	fi
@@ -307,7 +310,7 @@ pull-git-repo() {
 
 build-makepkg-package() {
 	local TARGET_PACKAGE="${1}"
-	if ! pushd "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" 1> /dev/null; then
+	if ! pushd "${SOURCE_PATH}"/"${TARGET_PACKAGE}" 1> /dev/null; then
 		print_error 63
 		exit 63
 	fi
@@ -339,12 +342,12 @@ remove-from-system() {
 
 remove-from-package-list() {
 	local TARGET_PACKAGE="${1}"
-	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list 2> /dev/null; then
-		sed -i "/^${TARGET_PACKAGE}$/d" "${SOURCE_PATH:?Source path not defined.}"/package_list
+	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
+		sed -i "/^${TARGET_PACKAGE}$/d" "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
 	else
 		return 0
 	fi
-	if grep -qe "^${TARGET_PACKAGE}$" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list; then
 		return 2
 	fi
 	return 0
@@ -352,10 +355,10 @@ remove-from-package-list() {
 
 write-package-list() {
 	local TARGET_PACKAGE="${1}"
-	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list 2> /dev/null; then
-		echo "${TARGET_PACKAGE}" | tee -a "${SOURCE_PATH:?Source path not defined.}"/package_list 1> /dev/null
+	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
+		echo "${TARGET_PACKAGE}" | tee -a "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list 1> /dev/null
 	fi
-	if ! grep -qe "${TARGET_PACKAGE}" "${SOURCE_PATH:?Source path not defined.}"/package_list; then
+	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list; then
 		return 1
 	fi
 	return 0
@@ -389,7 +392,7 @@ aur-rpc-suggest() {
 	local RESULTS
 	RESULTS=$(curl \
 		"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null \
-		| jq -r ".[:${SEARCH_RESULTS}]")
+		| jq -r ".[:${SEARCH_RESULTS}]" 2> /dev/null)
 	echo "${RESULTS}"
 }
 
@@ -400,14 +403,14 @@ install-aur-package() {
 		compare-versions "${TARGET_PACKAGE}" || return 0
 	fi
 
-	if [[ -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]]; then
+	if [[ -d "${SOURCE_PATH}"/"${TARGET_PACKAGE}" ]]; then
 		if ${WIPE_EXISTING}; then
 			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
 		elif ${OVERWRITE_EXISTING} && [[ "${COMPARISON_CRITERIA}" == "rpc" ]]; then
 			pull-git-repo "${TARGET_PACKAGE}" || return 11
 		fi
 	fi
-	if [[ ! -d "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" ]]; then
+	if [[ ! -d "${SOURCE_PATH}"/"${TARGET_PACKAGE}" ]]; then
 		clone-git-repo "${TARGET_PACKAGE}" || return 12
 	fi
 
@@ -489,7 +492,7 @@ fi
 
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
-GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-s" "--source-path" "-v" "--verbosity")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-s" "--source-path" "-v" "--verbosity")
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
@@ -516,13 +519,16 @@ MAINTAINED=${AURX_MAINTAINED:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
+PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 SORT_BY=${AURX_SORT_BY:-popularity}
-SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.src}"
+SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.aurx/src}"
 VERBOSITY=${AURX_VERBOSITY:-2}
 VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+
+# Arrays.
 declare -a MAKEPKG_OPTS
 if [[ -n "${AURX_MAKEPKG_OPTS}" ]]; then
 	for OPT in ${AURX_MAKEPKG_OPTS}; do
@@ -543,10 +549,10 @@ fi
 # Options.
 LONGOPTS=''
 LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
-LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCdfhkKmOVwW'
-OPTIONS+='b:e:M:o:r:R:s:S:v:x:'
+OPTIONS+='b:e:M:o:p:r:R:s:S:v:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
@@ -627,6 +633,10 @@ while true; do
 			NO_OUT_OF_DATE=true
 			shift
 			;;
+		-p|--persistent-path )
+			PERSISTENT_PATH="${2}"
+			shift 2
+			;;
 		-r|--search-results )
 			SEARCH_RESULTS="${2}"
 			shift 2
@@ -698,6 +708,8 @@ if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 	exit 55
 fi
 shift
+
+# No arguments for install, remove, search.
 if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 56
 	exit 56
@@ -753,7 +765,7 @@ TARGET_PACKAGES=("${@}")
 if ${ALL}; then
 	while IFS= read -r TARGET_PACKAGE; do
 		TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
-	done < "${SOURCE_PATH:?Source path not defined.}"/package_list
+	done < "${PERSISTENT_PATH}"/package_list
 fi
 
 case "${CURRENT_OPERATION}" in
@@ -794,10 +806,13 @@ if [[ "${CURRENT_OPERATION}" == completion ]]; then
 fi
 
 if [[ ! -d "${SOURCE_PATH}" ]]; then
-	mkdir -p "${SOURCE_PATH}"
+	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
 fi
-if [[ ! -f "${SOURCE_PATH}"/package_list ]]; then
-	touch "${SOURCE_PATH}"/package_list
+if [[ ! -d "${PERSISTENT_PATH}" ]]; then
+	mkdir -p "${PERSISTENT_PATH:?Persistent path not defined.}"
+fi
+if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
+	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
 fi
 
 for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do

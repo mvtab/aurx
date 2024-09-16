@@ -41,13 +41,14 @@ completion | generate completion for the specified shell.
 Capitalized long option names with `AURX_` prefix. For example for `--search-criteria`: `AURX_SEARCH_CRITERIA`.
 
 #### General
-option            | description                                 | default      | values 
-:---------------- | :------------------------------------------ | :----------- | :-----
--a, --all         | Include all installed packages.             | false        | true, false
--f, --force       | Forces the current operation, if appliable. | false        | true, false
--h, --help        | Display usage and exit.                     | N/A          | N/A
--s, --source-path | Work directory.                             | ${HOME}/.src | any path
--v, --verbosity   | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2            | 0, 1, 2
+option                | description                                 | default           | values 
+:-------------------- | :------------------------------------------ | :---------------- | :-----
+-a, --all             | Include all installed packages.             | false             | true, false
+-f, --force           | Forces the current operation, if appliable. | false             | true, false
+-h, --help            | Display usage and exit.                     | N/A               | N/A
+-p, --persistent-path | Where to save persistent information.       | ${HOME}/.aurx/cfg | any path
+-s, --source-path     | Work directory.                             | ${HOME}/.aurx/src | any path
+-v, --verbosity       | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2                 | 0, 1, 2
 
 #### Install
 option                    | description                                 | default | values
@@ -172,4 +173,17 @@ Additionally or alternatively, you can refresh the sudo timeout every time you e
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
 Every tab does one request.
+
+## Changelog
+
+
+### 09.16.2024 Breaking changes - Default source directory changed.
+While adding the --persistent-path configuration option, I also refactored and changed the default work directory for more scalability.
+To migrate any old data simply copy it to these locations:
+```
+sources:        ${HOME}/.aurx/src/
+package_list:   ${HOME}/.aurx/cfg/package_list
+```
+
+Or just set the old directories with options or environment variables.
 
