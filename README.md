@@ -25,6 +25,46 @@ source <(aurx completion bash --executable-name aurx)
 aurx [OPERATION] [OPTION..] [PACKAGE..]
 ``` 
 
+### Requirements
+
+#### install | update
+binary    | package
+:-------- | :------
+awk       | gawk
+curl      | curl
+echo      | coreutils
+git       | git
+grep      | grep
+jq        | jq
+makepkg   | pacman
+sed       | sed
+tee       | coreutils
+debugedit | debugedit
+fakeroot  | fakeroot
+strip     | binutils
+
+#### remove
+binary    | package
+:-------- | :------
+grep   | grep
+pacman | pacman
+sed    | sed
+
+#### search
+binary | package
+:----- | :------
+curl   | curl
+echo   | coreutils
+jq     | jq
+
+#### completion
+binary    | package
+:-------- | :------
+curl      | curl
+echo      | coreutils
+jq        | jq
+\_filedir | bash-completion
+
 ### Operations
 
 operation  | description
