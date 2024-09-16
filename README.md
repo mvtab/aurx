@@ -128,14 +128,14 @@ aurx install test --verify-versions --comparison-criteria pkgbuild
 ```bash
 aurx update test
 # equivalent of
-aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp # with package_list from original source-path
+aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp --persistent-path ${HOME}/.aurx/cfg
 ```
 
 ##### Update all installed packages.
 ```bash
 aurx update --all
 # equivalent of 
-aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp # with package_list from original source-path
+aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp --persistent-path ${HOME}/.aurx/cfg
 ```
 
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
