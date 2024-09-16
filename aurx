@@ -775,8 +775,11 @@ case "${CURRENT_OPERATION}" in
 	remove )
 		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
 		;;
-	search | completion )
+	search )
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
+		;;
+	completion )
+		REQUIRED_PACKAGES=('curl' 'echo' 'jq' 'bash-completion')
 		;;
 	* )
 		print_error 55
