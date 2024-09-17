@@ -203,7 +203,7 @@ aurx-completion() {
 				        elif [[ \${LAST_WORD} == "--sort-by" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SORT_BY_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]]; then
-				                cur=\${CURRENT_WORD} _filedir
+						COMPREPLY=( \$(compgen -f -- "\${CURRENT_WORD}") )
 				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
@@ -779,7 +779,7 @@ case "${CURRENT_OPERATION}" in
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	completion )
-		REQUIRED_PACKAGES=('curl' 'echo' 'jq' '_filedir')
+		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	* )
 		print_error 55

@@ -63,7 +63,6 @@ binary    | package
 curl      | curl
 echo      | coreutils
 jq        | jq
-\_filedir | bash-completion
 
 ### Operations
 
@@ -129,7 +128,7 @@ option                | description                        | default      | valu
 #### Completion
 option                | description                | default | values
 :-------------------- | :------------------------- | :------ | :-----
--e, --executable-name | The name of the executable | \${0}   | any string
+-e, --executable-name | The name of the executable | 'aurx'  | any string
 
 #### Running in containers
 There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
