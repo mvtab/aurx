@@ -17,7 +17,7 @@ chmod +111 ./aurx
 ln -sf ${PWD}/aurx ~/bin/aurx
 
 ## Completion.
-source <(aurx completion bash --executable-name aurx)
+source <(aurx completion bash)
 ```
 
 ## Usage
@@ -213,8 +213,16 @@ Additionally or alternatively, you can refresh the sudo timeout every time you e
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
 Every tab does one request.
 
-## Changelog
+## Roadmap
 
+### Soon
+- Fix directory bash completion expansion to mimic \_filedir from bash completion.  
+- Add list operation that only reads the package list and prints it to terminal.  
+
+### Not so soon
+- Implement upload functionality to AUR.  
+
+## Changelog
 
 ### 2024.09.16 Breaking changes - Default source directory changed.
 While adding the --persistent-path configuration option, I also refactored and changed the default work directory for more scalability.
