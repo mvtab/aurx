@@ -216,11 +216,11 @@ Every tab does one request.
 ## Roadmap
 
 ### Soon
-- Fix directory bash completion expansion to mimic \_filedir from bash completion.  
-- Add list operation that only reads the package list and prints it to terminal.  
+- [ ] Fix directory bash completion expansion to mimic \_filedir from bash completion.  
+- [ ] Add list operation that only reads the package list and prints it to terminal.  
 
 ### Not so soon
-- Implement upload functionality to AUR.  
+- [ ] Implement upload functionality to AUR.  
 
 ## Changelog
 
