@@ -50,19 +50,12 @@ grep   | grep
 pacman | pacman
 sed    | sed
 
-#### search
+#### search / completion
 binary | package
 :----- | :------
 curl   | curl
 echo   | coreutils
 jq     | jq
-
-#### completion
-binary    | package
-:-------- | :------
-curl      | curl
-echo      | coreutils
-jq        | jq
 
 ### Operations
 
@@ -166,15 +159,11 @@ aurx install test --verify-versions --comparison-criteria pkgbuild
 ##### Update a package to the latest version available online and delete source after.
 ```bash
 aurx update test
-# equivalent of
-aurx install test --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp --persistent-path ${HOME}/.aurx/cfg
 ```
 
 ##### Update all installed packages.
 ```bash
 aurx update --all
-# equivalent of 
-aurx install --all --verify-versions --overwrite-existing --cleanup --clean-operation --source-path /tmp --persistent-path ${HOME}/.aurx/cfg
 ```
 
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
