@@ -183,7 +183,7 @@ aurx search gcc --search-criteria makedepends --sort-by lastmodified --search-re
 
 ##### Get bash completion for custom executable name (where `aurx` is not correct).
 ```bash
-source <(/home/user/specific/path/aurx completion bash --executable-name "${0}")
+source <(/home/user/specific/path/aurx completion bash --executable-name /home/user/specific/path/aurx)
 ```
 
 ## Limitations
