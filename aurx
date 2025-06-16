@@ -27,14 +27,14 @@ usage() {
 		  -c, --cleanup                         delete sources after successful installs.
 		  -C, --clean-operation                 delete sources after unsucessful installs.
 		  -d, --download-only                   only downloads the repository from AUR.
-		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ('-sirc')
+		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
 		  -V, --verify-versions                 compare target versions to installed ones.
 		  -w, --wipe-existing                   wipe eventually existing sources.
 		  -W, --overwrite-existing              can the existing sources be overwritten.
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 
 		  remove:
-		  -R, --remove-opts [OPTS]              opts to give in to pacman for removing package. ('-R')
+		  -R, --remove-opts [OPTS]              opts to give in to pacman for removing package. ("-R")
 
 		  search:
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
@@ -45,10 +45,10 @@ usage() {
 		  -m, --maintained                      only return maintained packages.
 		
 		  update:
-		  -B, --block-overwrite                 don't allow overwriting existing sources. (false)
-		  -k, --keep-sources                    don't cleanup after successful updates. (false)
-		  -K, --keep-failed-sources             don't cleanup after unsuccessfulupdates. (false)
-		  -M, --makepkg-opts                    opts to give in to makepkg installs. ('-sirc')
+		  -B, --block-overwrite                 don't allow overwriting existing sources.
+		  -k, --keep-sources                    don't cleanup after successful updates.
+		  -K, --keep-failed-sources             don't cleanup after unsuccessfulupdates.
+		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 
 		  completion:
