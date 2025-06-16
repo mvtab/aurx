@@ -23,9 +23,14 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 ### Requirements
 
-- `install`/`update`: awk, curl, echo, git, grep, jq, makepkg (pacman), sed, tee, debugedit, fakeroot, strip (binutils).
-- `remove`: grep, pacman, sed.
-- `search`/`completion`: curl, echo, jq.
+##### `install`/`update`
+> awk, curl, echo, git, grep, jq, makepkg (pacman), sed, tee, debugedit, fakeroot, strip (binutils).
+
+##### `remove`
+> grep, pacman, sed.
+
+##### `search`/`completion`
+> curl, echo, jq.
 
 
 ### Operations
@@ -44,14 +49,14 @@ completion | generate completion for the specified shell.
 Capitalized long option names with `AURX_` prefix. For example for `--search-criteria`: `AURX_SEARCH_CRITERIA`.
 
 #### Values
-A comprehensive list of the possible configurations can be found with `aurx --help`.
+A comprehensive list of the possible configurations can be found with `aurx --help` or by using the bash completion.
 
 #### Running in containers
 There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
 
 #### Non-interactive
 Script can be ran noninteractively by changing the makepkg opts (`-M`, `--makepkg-opts`) to, for example, `'--noconfirm -sirc'`.  
-`sudo` password must be handled by the user. (see Limitations)
+`sudo` password must be handled by the user. (see Considerations)
 
 ## Examples
 
@@ -124,8 +129,8 @@ Every tab does one request.
 While adding the --persistent-path configuration option, I also refactored and changed the default work directory for more scalability.
 To migrate any old data simply copy it to these locations:
 ```
-sources:        ${HOME}/.aurx/src/
 package_list:   ${HOME}/.aurx/cfg/package_list
+sources:        ${HOME}/.aurx/src/
 ```
 
 Or just set the old directories with options or environment variables.
