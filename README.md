@@ -2,22 +2,18 @@
 The Archlinux User Repository eXplorer.
 
 ## Motivation
-This script strides to be a lightweight AUR helper that takes on AUR-related tasks and nothing more.  
-It also offers the freedom to manipulate and keep track of all kinds of sources: self maintained or online ones. Theoretically it could be expanded to offer upload functionality to AUR.  
+A simple bash script for easily managing AUR installs.
 
 ## Installation
 ```
 git clone git@github.com:mvtab/aurx.git
 cd aurx/
 chmod +111 ./aurx
+./aurx --help
 
-# Optional.
-
-## Soft link.
-ln -sf ${PWD}/aurx ~/bin/aurx
-
-## Completion.
-source <(aurx completion bash)
+## Soft link and completion for comfort.
+#ln -sf ${PWD}/aurx ~/bin/aurx
+#source <(aurx completion bash)
 ```
 
 ## Usage
@@ -27,35 +23,10 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 ### Requirements
 
-#### install | update
-binary    | package
-:-------- | :------
-awk       | gawk
-curl      | curl
-echo      | coreutils
-git       | git
-grep      | grep
-jq        | jq
-makepkg   | pacman
-sed       | sed
-tee       | coreutils
-debugedit | debugedit
-fakeroot  | fakeroot
-strip     | binutils
+- `install`/`update`: awk, curl, echo, git, grep, jq, makepkg (pacman), sed, tee, debugedit, fakeroot, strip (binutils).
+- `remove`: grep, pacman, sed.
+- `search`/`completion`: curl, echo, jq.
 
-#### remove
-binary    | package
-:-------- | :------
-grep   | grep
-pacman | pacman
-sed    | sed
-
-#### search / completion
-binary | package
-:----- | :------
-curl   | curl
-echo   | coreutils
-jq     | jq
 
 ### Operations
 
@@ -72,56 +43,8 @@ completion | generate completion for the specified shell.
 #### Environment variables
 Capitalized long option names with `AURX_` prefix. For example for `--search-criteria`: `AURX_SEARCH_CRITERIA`.
 
-#### General
-option                | description                                 | default           | values 
-:-------------------- | :------------------------------------------ | :---------------- | :-----
--a, --all             | Include all installed packages.             | false             | true, false
--f, --force           | Forces the current operation, if appliable. | false             | true, false
--h, --help            | Display usage and exit.                     | N/A               | N/A
--p, --persistent-path | Where to save persistent information.       | ${HOME}/.aurx/cfg | any path
--s, --source-path     | Work directory.                             | ${HOME}/.aurx/src | any path
--v, --verbosity       | Verbosity: 0 - none, 1 - stderr, 2 - all    | 2                 | 0, 1, 2
-
-#### Install
-option                    | description                                 | default | values
-:------------------------ | :------------------------------------------ | :------ | :-----
--c, --cleanup             | Delete sources after successful installs.   | false   | true, false
--C, --clean-operation     | Delete sources after unsuccessful installs. | false   | true, false
--M, --makepkg-opts        | Opts to give in to makepkg installs.        | '-sirc' | any makepkg opts
--d, --download-only       | Only downloads the repository from AUR.     | false   | true, false
--V, --verify-versions     | compare target versions to installed ones.  | false   | true, false
--w, --wipe-existing       | Wipe eventually existing sources.           | false   | true, false
--W, --overwrite-existing  | can the existing sources be overwritten     | false   | true, false
--x, --comparison-criteria | criteria to use when comparing packages     | "rpc"   | "rpc", "pkgbuild"
-
-#### Remove
-option            | description                                      | default | values
-:---------------- | :----------------------------------------------- | :------ | :-----
--R, --remove-opts | Opts to give in to pacman for removing packages. | '-R'    | any pacman opts
-
-#### Update
-option                    | description                               | default | values
-:------------------------ | :---------------------------------------- | :------ | :-----
--B, --block-overwrite     | Don't allow overwriting existing sources. | false   | true, false
--k, --keep-sources        | Don't cleanup after successful installs   | false   | true, false
--K, --keep-failed-sources | Don't cleanup after unsuccessful installs | false   | true, false
--M, --makepkg-opts        | Opts to give in to makepkg installs.      | '-sirc' | any makepkg opts
--x, --comparison-criteria | criteria to use when comparing packages   | "rpc"   | "rpc", "pkgbuild"
-
-#### Search
-option                | description                        | default      | values
-:-------------------- | :--------------------------------- | :----------- | :-----
--r, --search-results  | Number of results to display.      | 20           | any int
--S, --search-criteria | Criteria to use in search queries. | "name"       | "name", "name-desc", "maintainer", "depends", "makedepends", "optdepends", "checkdepends", "suggest"
--b, --sort-by         | Key to sort results by.            | "popularity" | "firstsubmitted", "lastmodified", "votes", "popularity"
--o, --order-by        | How to order search results.       | "descending" | "ascending", "descending"
--O, --no-out-of-date  | Remove all out of date packages.   | false        | true, false
--m, --maintained      | Only return maintained packages.   | false        | true, false
-
-#### Completion
-option                | description                | default | values
-:-------------------- | :------------------------- | :------ | :-----
--e, --executable-name | The name of the executable | 'aurx'  | any string
+#### Values
+A comprehensive list of the possible configurations can be found with `aurx --help`.
 
 #### Running in containers
 There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
@@ -186,30 +109,14 @@ aurx search gcc --search-criteria makedepends --sort-by lastmodified --search-re
 source <(/home/user/specific/path/aurx completion bash --executable-name /home/user/specific/path/aurx)
 ```
 
-## Limitations
-
-### Not intensively tested
-Don't use this script's base dir as sole copy of your work.
+## Considerations
 
 ### Sudo password
 This script intentionally does not handle sudo passwords in any way.  
 
-Wokarounds:  
-You can increase the default duration of a sudo session by changing the `Defaults timestamp_timeout` in `/etc/sudoers`.  
-Additionally or alternatively, you can refresh the sudo timeout every time you execute sudo by adding `alias sudo='sudo -v; sudo '` to your .bashrc.  
-
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
 Every tab does one request.
-
-## Roadmap
-
-### Soon
-- [ ] Fix directory bash completion expansion to mimic \_filedir from bash completion.  
-- [ ] Add list operation that only reads the package list and prints it to terminal.  
-
-### Not so soon
-- [ ] Implement upload functionality to AUR.  
 
 ## Changelog
 

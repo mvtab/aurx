@@ -8,51 +8,51 @@ usage() {
 		Every option can be set through environment variables but the explicit option has the highest priority.
 		
 		Operations:
-		  install                   pretty safe option for installing custom sources.
-		  remove                    remove packages from system and the package list.
-		  update                    pretty safe option for installing default sources. (will overwrite and delete existent ones)
-		  search                    query the AUR with specific criterias and keywords via RPC.
-		  completion                generate completion for the specified shell.
+		  install       pretty safe option for installing custom sources.
+		  remove        remove packages from system and the package list.
+		  update        pretty safe option for installing default sources. (will overwrite and delete existent ones)
+		  search        query the AUR with specific criterias and keywords via RPC.
+		  completion    generate completion for the specified shell.
 		
 		Options:
 		  general:
-		  -a, --all                 include all installed packages. (false)
-		  -f, --force               forces the current operation, where appliable. (false)
-		  -h, --help                display this information and exit.
-		  -p, --persistent-path     where to save persistent information like the package list. (\${SOURCE_PATH})
-		  -s, --source-path         work directory for builds.(\${HOME}/.src)
-		  -v, --verbosity           level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
+		  -a, --all                             include all installed packages.
+		  -f, --force                           forces the current operation, where appliable.
+		  -h, --help                            display this information and exit.
+		  -p, --persistent-path                 where to save persistent information like the package list. (\${HOME}/.aurx/cfg)
+		  -s, --source-path                     work directory for builds.(\${HOME}/.aurx/src)
+		  -v, --verbosity                       level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
 		
 		  install:
-		  -c, --cleanup             delete sources after successful installs. (false)
-		  -C, --clean-operation     delete sources after unsucessful installs. (false)
-		  -d, --download-only       only downloads the repository from AUR. (false)
-		  -M, --makepkg-opts        opts to give in to makepkg installs. ('-sirc')
-		  -V, --verify-versions     compare target versions to installed ones. (false)
-		  -w, --wipe-existing       wipe eventually existing sources. (false)
-		  -W, --overwrite-existing  can the existing sources be overwritten. (false)
-		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
+		  -c, --cleanup                         delete sources after successful installs.
+		  -C, --clean-operation                 delete sources after unsucessful installs.
+		  -d, --download-only                   only downloads the repository from AUR.
+		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ('-sirc')
+		  -V, --verify-versions                 compare target versions to installed ones.
+		  -w, --wipe-existing                   wipe eventually existing sources.
+		  -W, --overwrite-existing              can the existing sources be overwritten.
+		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 
 		  remove:
-		  -R, --remove-opts         opts to give in to pacman for removing package. ('-R')
+		  -R, --remove-opts [OPTS]              opts to give in to pacman for removing package. ('-R')
 
 		  search:
-		  -r, --search-results      number of results to display from search queries. (20)
-		  -S, --search-criteria     criteria to use in search queries. ("name")
-		  -b, --sort-by             key to sort results by. ("popularity")
-		  -o, --order-by            how to order search results. ("descending")
-		  -O, --no-out-of-date      remove all out of date packages. (false)
-		  -m, --maintained          only return maintained packages. (false)
+		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
+		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
+		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
+		  -o, --order-by [ORDER]                how to order search results. ("descending")
+		  -O, --no-out-of-date                  remove all out of date packages.
+		  -m, --maintained                      only return maintained packages.
 		
 		  update:
-		  -B, --block-overwrite     don't allow overwriting existing sources. (false)
-		  -k, --keep-sources        don't cleanup after successful updates. (false)
-		  -K, --keep-failed-sources don't cleanup after unsuccessfulupdates. (false)
-		  -M, --makepkg-opts        opts to give in to makepkg installs. ('-sirc')
-		  -x, --comparison-criteria criteria to use when comparing packages. ("rpc")
+		  -B, --block-overwrite                 don't allow overwriting existing sources. (false)
+		  -k, --keep-sources                    don't cleanup after successful updates. (false)
+		  -K, --keep-failed-sources             don't cleanup after unsuccessfulupdates. (false)
+		  -M, --makepkg-opts                    opts to give in to makepkg installs. ('-sirc')
+		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 
 		  completion:
-		  -e, --executable-name     the name of the executable to be used for completion. ("\${0}")
+		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
 		
 		Environment variables:
 		  Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
