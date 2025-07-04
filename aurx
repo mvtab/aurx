@@ -1,5 +1,76 @@
 #!/bin/bash
 
+# The Archlinux User Repository eXplorer.
+# A simple bash script for easily managing AUR installs.
+#
+#
+# Script structure:
+#
+# Metadata
+# Variables & Arrays
+# Functions
+# Options parse
+# Input sanity checks
+# Execution
+#
+
+# Metadata.
+POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-s" "--source-path" "-v" "--verbosity")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
+REMOVE_OPTIONS=("-R" "--remove-opts")
+UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
+COMPLETION_OPTIONS=("-e" "--executable-name")
+AVAILABLE_COMPLETIONS=("bash")
+SEARCH_CRITERIA_VALUES=("name" "name-desc" "maintainer" "depends" "makedepends" "optdepends" "checkdepends" "suggest")
+COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
+SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
+ORDER_BY_VALUES=("ascending" "descending")
+
+# Variables.
+ALL=${AURX_ALL:-false}
+BLOCK_OVERWRITE=${AURX_BLOCK_OVERWRITE:-false}
+CLEANUP=${AURX_CLEANUP:-false}
+CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
+COMPARISON_CRITERIA=${AURX_COMPARISON_CRITERIA:-rpc}
+DOWNLOAD_ONLY=${AURX_DOWNLOAD_ONLY:-false}
+EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
+FORCE=${AURX_FORCE:-false}
+KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
+KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
+MAINTAINED=${AURX_MAINTAINED:-false}
+NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
+ORDER_BY=${AURX_ORDER_BY:-descending}
+OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
+PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
+SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
+SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
+SORT_BY=${AURX_SORT_BY:-popularity}
+SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.aurx/src}"
+VERBOSITY=${AURX_VERBOSITY:-2}
+VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
+WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+
+# Arrays.
+declare -a MAKEPKG_OPTS
+if [[ -n "${AURX_MAKEPKG_OPTS}" ]]; then
+	for OPT in ${AURX_MAKEPKG_OPTS}; do
+		MAKEPKG_OPTS+=("${OPT}")
+	done
+else
+	MAKEPKG_OPTS=('-sirc')
+fi
+declare -a REMOVE_OPTS
+if [[ -n "${AURX_REMOVE_OPTS}" ]]; then
+	for OPT in ${AURX_REMOVE_OPTS}; do
+		REMOVE_OPTS+=("${OPT}")
+	done
+else
+	REMOVE_OPTS=('-R')
+fi
+
+# Functions.
 usage() {
 	cat <<- EOF
 		usage: ${EXECUTABLE_NAME} [OPERATION] [OPTION..] [PACKAGE..] 
@@ -8,48 +79,57 @@ usage() {
 		Every option can be set through environment variables but the explicit option has the highest priority.
 		
 		Operations:
-		  install       pretty safe option for installing custom sources.
+		  install       install any package from AUR or the working directory.
 		  remove        remove packages from system and the package list.
-		  update        pretty safe option for installing default sources. (will overwrite and delete existent ones)
-		  search        query the AUR with specific criterias and keywords via RPC.
+		  update        force install any package from AUR and delete source after.
+		  search        query the AUR database via the HTTP RPC API.
 		  completion    generate completion for the specified shell.
 		
 		Options:
 		  general:
-		  -a, --all                             include all installed packages.
-		  -f, --force                           forces the current operation, where appliable.
+		  -a, --all                             add all installed packages to the operation.
+		  -f, --force                           forces the operation, where appliable.
 		  -h, --help                            display this information and exit.
-		  -p, --persistent-path                 where to save persistent information like the package list. (\${HOME}/.aurx/cfg)
-		  -s, --source-path                     work directory for builds.(\${HOME}/.aurx/src)
-		  -v, --verbosity                       level of verbosity: 0 - none, 1 - stderr, 2 - all. (2)
+		  -p, --persistent-path                 path for persistent data. ("\${HOME}/.aurx/cfg")
+		  -s, --source-path                     work directory for builds.("\${HOME}/.aurx/src")
+		  -v, --verbosity                       level of verbosity. (2)
+	                                                0 - none, 1 - stderr, 2 - all.
 		
 		  install:
 		  -c, --cleanup                         delete sources after successful installs.
 		  -C, --clean-operation                 delete sources after unsucessful installs.
-		  -d, --download-only                   only downloads the repository from AUR.
+		  -d, --download-only                   download the source from AUR and stop.
 		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
 		  -V, --verify-versions                 compare target versions to installed ones.
 		  -w, --wipe-existing                   wipe eventually existing sources.
-		  -W, --overwrite-existing              can the existing sources be overwritten.
+		  -W, --overwrite-existing              overwrite eventually existing sources.
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
+	                                                "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  remove:
-		  -R, --remove-opts [OPTS]              opts to give in to pacman for removing package. ("-R")
+		  -R, --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
 
 		  search:
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
+	                                                "name", "name-desc", "maintainer", "depends",
+	                                                "makedepends", "optdepends", "checkdepends",
+	                                                "suggest".
 		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
+	                                                "popularity", "firstsubmitted", "lastmodified",
+	                                                "votes", "popularity".
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
-		  -O, --no-out-of-date                  remove all out of date packages.
-		  -m, --maintained                      only return maintained packages.
+	                                                "ascending", "descending".
+		  -O, --no-out-of-date                  filter out all out of date packages.
+		  -m, --maintained                      filter out unmaintained packages.
 		
 		  update:
-		  -B, --block-overwrite                 don't allow overwriting existing sources.
+		  -B, --block-overwrite                 don't overwrite existing sources.
 		  -k, --keep-sources                    don't cleanup after successful updates.
-		  -K, --keep-failed-sources             don't cleanup after unsuccessfulupdates.
+		  -K, --keep-failed-sources             don't cleanup after unsuccessful updates.
 		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
+	                                                "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
@@ -490,61 +570,6 @@ if [[ ${?} -ne 4 ]]; then
 	exit 50
 fi
 
-# Metadata.
-POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
-GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-s" "--source-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
-REMOVE_OPTIONS=("-R" "--remove-opts")
-UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
-COMPLETION_OPTIONS=("-e" "--executable-name")
-AVAILABLE_COMPLETIONS=("bash")
-SEARCH_CRITERIA_VALUES=("name" "name-desc" "maintainer" "depends" "makedepends" "optdepends" "checkdepends" "suggest")
-COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
-SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
-ORDER_BY_VALUES=("ascending" "descending")
-
-# Variables.
-ALL=${AURX_ALL:-false}
-BLOCK_OVERWRITE=${AURX_BLOCK_OVERWRITE:-false}
-CLEANUP=${AURX_CLEANUP:-false}
-CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
-COMPARISON_CRITERIA=${AURX_COMPARISON_CRITERIA:-rpc}
-DOWNLOAD_ONLY=${AURX_DOWNLOAD_ONLY:-false}
-EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
-FORCE=${AURX_FORCE:-false}
-KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
-KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
-MAINTAINED=${AURX_MAINTAINED:-false}
-NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
-ORDER_BY=${AURX_ORDER_BY:-descending}
-OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
-PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
-SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
-SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
-SORT_BY=${AURX_SORT_BY:-popularity}
-SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.aurx/src}"
-VERBOSITY=${AURX_VERBOSITY:-2}
-VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
-WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
-
-# Arrays.
-declare -a MAKEPKG_OPTS
-if [[ -n "${AURX_MAKEPKG_OPTS}" ]]; then
-	for OPT in ${AURX_MAKEPKG_OPTS}; do
-		MAKEPKG_OPTS+=("${OPT}")
-	done
-else
-	MAKEPKG_OPTS=('-sirc')
-fi
-declare -a REMOVE_OPTS
-if [[ -n "${AURX_REMOVE_OPTS}" ]]; then
-	for OPT in ${AURX_REMOVE_OPTS}; do
-		REMOVE_OPTS+=("${OPT}")
-	done
-else
-	REMOVE_OPTS=('-R')
-fi
 
 # Options.
 LONGOPTS=''
@@ -709,13 +734,13 @@ if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 fi
 shift
 
-# No arguments for install, remove, search.
+# No arguments for install, remove, search exception.
 if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 56
 	exit 56
 fi
 
-# Root + install/update.
+# Root + install/update exception.
 if [[ ${UID} -eq 0 ]] && [[ " install update " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 57
 	exit 57
@@ -761,6 +786,7 @@ case "${SORT_BY}" in
 		;;
 esac
 
+# Add all packages if 'ALL' option active.
 TARGET_PACKAGES=("${@}")
 if ${ALL}; then
 	while IFS= read -r TARGET_PACKAGE; do
@@ -768,6 +794,7 @@ if ${ALL}; then
 	done < "${PERSISTENT_PATH}"/package_list
 fi
 
+# Dependencies check.
 case "${CURRENT_OPERATION}" in
 	install | update )
 		REQUIRED_PACKAGES=('awk' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee' 'debugedit' 'fakeroot' 'strip')
@@ -797,6 +824,7 @@ if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
 	exit 59
 fi
 
+# Completion early execution.
 if [[ "${CURRENT_OPERATION}" == completion ]]; then
 	COMPLETION_TYPE="${TARGET_PACKAGES[0]}"
 	if [[ "${AVAILABLE_COMPLETIONS[*]}" =~ ${COMPLETION_TYPE} ]]; then
@@ -808,6 +836,7 @@ if [[ "${CURRENT_OPERATION}" == completion ]]; then
 	fi
 fi
 
+# Directories.
 if [[ ! -d "${SOURCE_PATH}" ]]; then
 	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
 fi
@@ -818,6 +847,7 @@ if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
 	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
 fi
 
+# Execution.
 for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 	"${CURRENT_OPERATION}"-aur-package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 	ERROR_CODE=${?}
@@ -833,3 +863,4 @@ for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 			;;
 	esac
 done
+
