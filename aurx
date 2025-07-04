@@ -14,8 +14,9 @@
 # Execution
 #
 
+
 # Metadata.
-POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion")
+POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion" "list")
 GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-s" "--source-path" "-v" "--verbosity")
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
@@ -73,7 +74,7 @@ fi
 # Functions.
 usage() {
 	cat <<- EOF
-		usage: ${EXECUTABLE_NAME} [OPERATION] [OPTION..] [PACKAGE..] 
+		usage: ${EXECUTABLE_NAME} [OPERATION] [OPTION].. [PACKAGE].. 
 		
 		The Archlinux User Repository eXplorer.
 		Every option can be set through environment variables but the explicit option has the highest priority.
@@ -84,6 +85,7 @@ usage() {
 		  update        force install any package from AUR and delete source after.
 		  search        query the AUR database via the HTTP RPC API.
 		  completion    generate completion for the specified shell.
+		  list          search for all installed AUR packages.
 		
 		Options:
 		  general:
@@ -93,7 +95,7 @@ usage() {
 		  -p, --persistent-path                 path for persistent data. ("\${HOME}/.aurx/cfg")
 		  -s, --source-path                     work directory for builds.("\${HOME}/.aurx/src")
 		  -v, --verbosity                       level of verbosity. (2)
-	                                                0 - none, 1 - stderr, 2 - all.
+		                                        0 - none, 1 - stderr, 2 - all.
 		
 		  install:
 		  -c, --cleanup                         delete sources after successful installs.
@@ -104,7 +106,7 @@ usage() {
 		  -w, --wipe-existing                   wipe eventually existing sources.
 		  -W, --overwrite-existing              overwrite eventually existing sources.
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
-	                                                "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  remove:
 		  -R, --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
@@ -112,14 +114,14 @@ usage() {
 		  search:
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
-	                                                "name", "name-desc", "maintainer", "depends",
-	                                                "makedepends", "optdepends", "checkdepends",
-	                                                "suggest".
+		                                        "name", "name-desc", "maintainer", "depends",
+		                                        "makedepends", "optdepends", "checkdepends",
+		                                        "suggest".
 		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
-	                                                "popularity", "firstsubmitted", "lastmodified",
-	                                                "votes", "popularity".
+		                                        "popularity", "firstsubmitted", "lastmodified",
+		                                        "votes", "popularity".
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
-	                                                "ascending", "descending".
+		                                        "ascending", "descending".
 		  -O, --no-out-of-date                  filter out all out of date packages.
 		  -m, --maintained                      filter out unmaintained packages.
 		
@@ -129,7 +131,7 @@ usage() {
 		  -K, --keep-failed-sources             don't cleanup after unsuccessful updates.
 		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
-	                                                "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
@@ -188,7 +190,7 @@ print_error() {
 			echo "[-] Unknown operation: \"${CURRENT_OPERATION}\". Possible options are: ${POSSIBLE_OPERATIONS[*]}."
 			;;
 		56 )
-			echo "[-] No packages selected and the current \"${CURRENT_OPERATION}\" operation requires it."
+			echo "[-] No parameters found and the current \"${CURRENT_OPERATION}\" operation requires at least one."
 			;;
 		57 )
 			echo "[!] Can't install or update packages as root."
@@ -581,13 +583,11 @@ search-aur-package() {
 	return 0
 }
 
-
 getopt --test 1> /dev/null && true
 if [[ ${?} -ne 4 ]]; then
 	print_error 50
 	exit 50
 fi
-
 
 # Options.
 LONGOPTS=''
@@ -751,9 +751,10 @@ if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 	exit 55
 fi
 shift
+TARGET_PACKAGES=("${@}")
 
-# No arguments for install, remove, search exception.
-if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search " =~ ${CURRENT_OPERATION} ]]; then
+# No arguments for install, remove, search, completion exception.
+if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search completion " =~ ${CURRENT_OPERATION} ]]; then
 	print_error 56
 	exit 56
 fi
@@ -804,14 +805,6 @@ case "${SORT_BY}" in
 		;;
 esac
 
-# Add all packages if 'ALL' option active.
-TARGET_PACKAGES=("${@}")
-if ${ALL}; then
-	while IFS= read -r TARGET_PACKAGE; do
-		TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
-	done < "${PERSISTENT_PATH}"/package_list
-fi
-
 # Dependencies check.
 case "${CURRENT_OPERATION}" in
 	install | update )
@@ -824,6 +817,9 @@ case "${CURRENT_OPERATION}" in
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	completion )
+		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
+		;;
+	list )
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	* )
@@ -863,6 +859,20 @@ if [[ ! -d "${PERSISTENT_PATH}" ]]; then
 fi
 if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
 	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
+fi
+
+# List operation transformation.
+if [[ ${CURRENT_OPERATION} == list ]]; then
+	ALL=true
+	SEARCH_RESULTS=1
+	CURRENT_OPERATION="search"
+fi
+
+# Add all packages if 'ALL' option active.
+if ${ALL}; then
+	while IFS= read -r TARGET_PACKAGE; do
+		TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
+	done < "${PERSISTENT_PATH}"/package_list
 fi
 
 # Execution.

@@ -30,7 +30,7 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 > grep, pacman, sed.
 
 ##### search
-> curl, echo, jq.
+> curl, echo, jq.  
 > optional: pacman (for package installation status).
 
 ##### completion
@@ -40,11 +40,12 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 operation  | description
 :--------- | :----------
-install    | designated option for comfortably managing custom sources.
+install    | install any package from AUR or the working directory.
 remove     | Remove packages from system and the package list.
-update     | designated option for installing online packages using `/tmp` as workdir.
-search     | query the AUR with specific criterias and keywords via RPC.
+update     | force install any package from AUR and delete source after.
+search     | query the AUR database via the HTTP RPC API.
 completion | generate completion for the specified shell.
+list       | search for all locally installed AUR packages.
 
 ## Configuration
 
@@ -125,6 +126,13 @@ This script intentionally does not handle sudo passwords in any way.
 ### Completion
 Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
 Every tab does one request.
+
+### Search installed mark
+Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.  
+The installed mark does *not* mean the package is up to date. 
+
+### List
+If the results include not installed packages or search errors, it means an installed package is not on AUR anymore and you probably want to check that out. 
 
 ## Changelog
 
