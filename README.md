@@ -23,15 +23,18 @@ aurx [OPERATION] [OPTION..] [PACKAGE..]
 
 ### Requirements
 
-##### `install`/`update`
+##### install/update
 > awk, curl, echo, git, grep, jq, makepkg (pacman), sed, tee, debugedit, fakeroot, strip (binutils).
 
-##### `remove`
+##### remove
 > grep, pacman, sed.
 
-##### `search`/`completion`
+##### search
 > curl, echo, jq.
+> optional: pacman (for package installation status).
 
+##### completion
+> curl, echo, jq.
 
 ### Operations
 

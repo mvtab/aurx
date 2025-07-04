@@ -459,8 +459,26 @@ aur-rpc-search() {
 		RESULTS=$(echo "${RESULTS}" | jq -r '[.[] | select(.Maintainer != null)]')
 	fi
 	RESULTS=$(echo "${RESULTS}" | jq -r ".[:${SEARCH_RESULTS}]")
-	RESULTS=$(echo "${RESULTS}" | \
-		jq -r '.[] | "\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \n\t\(.Description)"')
+
+	if [[ $(command -v pacman) ]]; then
+		RESULTS=$(
+			echo "${RESULTS}" | jq -c '.[]' | while read -r TEMP_DICT; do
+				local INSTALLED_STATUS
+				local PACKAGE_NAME
+			
+				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
+				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
+					INSTALLED_STATUS="[installed]"
+				else
+					INSTALLED_STATUS=""
+				fi
+				echo "${TEMP_DICT}" | jq --arg INSTALLED_STATUS "${INSTALLED_STATUS}" '. + {"Installed": $INSTALLED_STATUS}'
+			done | jq -s '.'
+		)
+	fi
+
+	RESULTS=$(echo "${RESULTS}" \
+		| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \(.Installed) \n\t\(.Description)\"")
 	if [[ -z "${RESULTS}" ]]; then
 		return 1
 	fi
