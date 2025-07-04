@@ -315,7 +315,7 @@ compare-versions() {
 	local TARGET_PACKAGE="${1}"
 
 	local INSTALLED_VERSION
-	INSTALLED_VERSION=$(sudo pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null \
+	INSTALLED_VERSION=$(pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null \
 		| grep -e "Version" | awk '{ print $3 }')
 
 	case "${COMPARISON_CRITERIA}" in
@@ -465,22 +465,30 @@ aur-rpc-search() {
 	if [[ $(command -v pacman) ]]; then
 		RESULTS=$(
 			echo "${RESULTS}" | jq -c '.[]' | while read -r TEMP_DICT; do
-				local INSTALLED_STATUS
+				local INSTALLED_STRING
+				local UPDATED_STRING
 				local PACKAGE_NAME
 			
 				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
 				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
-					INSTALLED_STATUS="[installed]"
+					INSTALLED_STRING=" [installed]"
 				else
-					INSTALLED_STATUS=""
+					INSTALLED_STRING=""
 				fi
-				echo "${TEMP_DICT}" | jq --arg INSTALLED_STATUS "${INSTALLED_STATUS}" '. + {"Installed": $INSTALLED_STATUS}'
+				if compare-versions "${PACKAGE_NAME}"; then
+					UPDATED_STRING=" [new version available]"
+				else
+					UPDATED_STRING=""
+				fi
+				echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
+					--arg UPDATED_STRING "${UPDATED_STRING}" \
+					'. + {"InstalledString": $INSTALLED_STRING, "UpdatedString": $UPDATED_STRING}'
 			done | jq -s '.'
 		)
 	fi
 
 	RESULTS=$(echo "${RESULTS}" \
-		| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \(.Installed) \n\t\(.Description)\"")
+		| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.InstalledString)\(.UpdatedString) \n\t\(.Description)\"")
 	if [[ -z "${RESULTS}" ]]; then
 		return 1
 	fi
