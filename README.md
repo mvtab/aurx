@@ -105,7 +105,7 @@ aurx search test --no-out-of-date --maintained --sort-by votes
 
 ##### Grab the all-time first 5 submitted packages of a maintainer.
 ```bash
-aurx search FabioLolix --search-criteria maintainer --sort-by firstsubmitted --order-by ascending --search-results 5
+aurx search SomeMaintainerName --search-criteria maintainer --sort-by firstsubmitted --order-by ascending --search-results 5
 ```
 
 ##### Grab the latest 5 modified packages that have gcc as makedepends.
