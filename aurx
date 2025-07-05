@@ -241,12 +241,12 @@ print_error() {
 	esac
 }
 
-aurx-completion() {
+aurx_completion() {
 	local SHELL_TYPE="${1}"
 	case "${SHELL_TYPE}" in
 		bash )
 			cat <<- EOS
-				_aurx-completion() {
+				_aurx_completion() {
 					local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
 				        local LAST_WORD="\${COMP_WORDS[COMP_CWORD-1]}"
 				        COMPREPLY=()
@@ -305,13 +305,13 @@ aurx-completion() {
 				        
 				        return 0
 				}
-				complete -F _aurx-completion ${EXECUTABLE_NAME}
+				complete -F _aurx_completion ${EXECUTABLE_NAME}
 			EOS
 			;;
 	esac
 }
 
-compare-versions() {
+compare_versions() {
 	local TARGET_PACKAGE="${1}"
 
 	local INSTALLED_VERSION
@@ -349,7 +349,7 @@ compare-versions() {
 	return 0
 }
 
-clone-git-repo() {
+clone_git_repo() {
 	local TARGET_PACKAGE="${1}"
 	if ! pushd "${SOURCE_PATH}" 1> /dev/null; then
 		print_error 63
@@ -370,7 +370,7 @@ clone-git-repo() {
 	return 0
 }
 
-pull-git-repo() {
+pull_git_repo() {
 	local TARGET_PACKAGE="${1}"
 	if ! pushd "${SOURCE_PATH}"/"${TARGET_PACKAGE}" 1> /dev/null; then
 		print_error 63
@@ -390,7 +390,7 @@ pull-git-repo() {
 	return 0
 }
 
-build-makepkg-package() {
+build_makepkg_package() {
 	local TARGET_PACKAGE="${1}"
 	if ! pushd "${SOURCE_PATH}"/"${TARGET_PACKAGE}" 1> /dev/null; then
 		print_error 63
@@ -409,7 +409,7 @@ build-makepkg-package() {
 	fi
 }
 
-remove-from-system() {
+remove_from_system() {
 	local TARGET_PACKAGE="${1}"
 	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2>/dev/null) ]]; then
 		sudo pacman "${REMOVE_OPTS[@]}" "${TARGET_PACKAGE}"
@@ -422,7 +422,7 @@ remove-from-system() {
 	return 0
 }
 
-remove-from-package-list() {
+remove_from_package_list() {
 	local TARGET_PACKAGE="${1}"
 	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
 		sed -i "/^${TARGET_PACKAGE}$/d" "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
@@ -435,7 +435,7 @@ remove-from-package-list() {
 	return 0
 }
 
-write-package-list() {
+write_package_list() {
 	local TARGET_PACKAGE="${1}"
 	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
 		echo "${TARGET_PACKAGE}" | tee -a "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list 1> /dev/null
@@ -446,7 +446,7 @@ write-package-list() {
 	return 0
 }
 
-aur-rpc-search() {
+aur_rpc_search() {
 	local TARGET_KEYWORD="${1}"
 	local RESULTS
 	RESULTS=$(curl "https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" 2> /dev/null)
@@ -472,7 +472,7 @@ aur-rpc-search() {
 				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
 				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
 					INSTALLED_STRING=" [installed]"
-					if compare-versions "${PACKAGE_NAME}"; then
+					if compare_versions "${PACKAGE_NAME}"; then
 						UPDATED_STRING=" [new version available]"
 					else
 						UPDATED_STRING=""
@@ -495,7 +495,7 @@ aur-rpc-search() {
 	echo "${RESULTS}"
 }
 
-aur-rpc-suggest() {
+aur_rpc_suggest() {
 	local TARGET_KEYWORD="${1}"
 	local RESULTS
 	RESULTS=$(curl \
@@ -504,29 +504,29 @@ aur-rpc-suggest() {
 	echo "${RESULTS}"
 }
 
-install-aur-package() {
+install_aur_package() {
 	local TARGET_PACKAGE="${1}"
 
 	if ${VERIFY_VERSIONS}; then
-		compare-versions "${TARGET_PACKAGE}" || return 0
+		compare_versions "${TARGET_PACKAGE}" || return 0
 	fi
 
 	if [[ -d "${SOURCE_PATH}"/"${TARGET_PACKAGE}" ]]; then
 		if ${WIPE_EXISTING}; then
 			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
 		elif ${OVERWRITE_EXISTING} && [[ "${COMPARISON_CRITERIA}" == "rpc" ]]; then
-			pull-git-repo "${TARGET_PACKAGE}" || return 11
+			pull_git_repo "${TARGET_PACKAGE}" || return 11
 		fi
 	fi
 	if [[ ! -d "${SOURCE_PATH}"/"${TARGET_PACKAGE}" ]]; then
-		clone-git-repo "${TARGET_PACKAGE}" || return 12
+		clone_git_repo "${TARGET_PACKAGE}" || return 12
 	fi
 
 	if ${DOWNLOAD_ONLY}; then
 		return 0
 	fi
 
-	if build-makepkg-package "${TARGET_PACKAGE}"; then
+	if build_makepkg_package "${TARGET_PACKAGE}"; then
 		if ${CLEANUP}; then
 			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
 		fi
@@ -537,22 +537,22 @@ install-aur-package() {
 		return 13
 	fi
 	
-	write-package-list "${TARGET_PACKAGE}" || return 14
+	write_package_list "${TARGET_PACKAGE}" || return 14
 
 	return 0
 }
 
-remove-aur-package() {
+remove_aur_package() {
 	local TARGET_PACKAGE="${1}"
 
-	remove-from-system "${TARGET_PACKAGE}" || return 20
+	remove_from_system "${TARGET_PACKAGE}" || return 20
 
-	remove-from-package-list "${TARGET_PACKAGE}" || return 21
+	remove_from_package_list "${TARGET_PACKAGE}" || return 21
 
 	return 0
 }
 
-update-aur-package() {
+update_aur_package() {
 	local TARGET_PACKAGE="${1}"
 	local SOURCE_PATH='/tmp'
 	local VERIFY_VERSIONS=true
@@ -567,20 +567,20 @@ update-aur-package() {
 		local OVERWRITE_EXISTING=true
 	fi
 
-	install-aur-package "${TARGET_PACKAGE}" || return 30
+	install_aur_package "${TARGET_PACKAGE}" || return 30
 
 	return 0
 }
 
-search-aur-package() {
+search_aur_package() {
 	local TARGET_KEYWORD=${1}
 
 	case "${SEARCH_CRITERIA}" in
 		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends )
-			aur-rpc-search "${TARGET_KEYWORD}" || return 40
+			aur_rpc_search "${TARGET_KEYWORD}" || return 40
 			;;
 		suggest )
-			aur-rpc-suggest "${TARGET_KEYWORD}"
+			aur_rpc_suggest "${TARGET_KEYWORD}"
 			;;
 		* )
 			print_error 52
@@ -850,7 +850,7 @@ fi
 if [[ "${CURRENT_OPERATION}" == completion ]]; then
 	COMPLETION_TYPE="${TARGET_PACKAGES[0]}"
 	if [[ "${AVAILABLE_COMPLETIONS[*]}" =~ ${COMPLETION_TYPE} ]]; then
-		aurx-completion "${COMPLETION_TYPE}"
+		aurx_completion "${COMPLETION_TYPE}"
 		exit 0
 	else
 		print_error 62
@@ -885,7 +885,7 @@ fi
 
 # Execution.
 for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
-	"${CURRENT_OPERATION}"-aur-package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
+	"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 	ERROR_CODE=${?}
 	case "${ERROR_CODE}" in
 		0 )
