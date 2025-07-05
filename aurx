@@ -411,12 +411,12 @@ build_makepkg_package() {
 
 remove_from_system() {
 	local TARGET_PACKAGE="${1}"
-	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2>/dev/null) ]]; then
+	if [[ $(pacman -Qi "${TARGET_PACKAGE}" 2>/dev/null) ]]; then
 		sudo pacman "${REMOVE_OPTS[@]}" "${TARGET_PACKAGE}"
 	else
 		return 0
 	fi
-	if [[ $(sudo pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null) ]]; then
+	if [[ $(pacman -Qi "${TARGET_PACKAGE}" 2> /dev/null) ]]; then
 		return 1
 	fi
 	return 0
