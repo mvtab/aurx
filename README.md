@@ -30,11 +30,11 @@ aurx [OPERATION] [OPTION].. [PACKAGE]..
 ##### remove
 > grep, pacman, sed.
 
-##### search
+##### search / list
 > curl, echo, jq.  
 > optional: pacman (for package installation status).
 
-##### completion / list
+##### completion
 > curl, echo, jq.
 
 ### Operations
