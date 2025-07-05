@@ -479,6 +479,7 @@ aur_rpc_search() {
 					fi
 				else
 					INSTALLED_STRING=""
+					UPDATED_STRING=""
 				fi
 				echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
 					--arg UPDATED_STRING "${UPDATED_STRING}" \
