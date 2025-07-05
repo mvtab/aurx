@@ -816,18 +816,12 @@ esac
 # Dependencies check.
 case "${CURRENT_OPERATION}" in
 	install | update )
-		REQUIRED_PACKAGES=('awk' 'curl' 'echo' 'git' 'grep' 'jq' 'makepkg' 'pacman' 'sed' 'tee' 'debugedit' 'fakeroot' 'strip')
+		REQUIRED_PACKAGES=('curl' 'echo' 'git' 'grep' 'jq' 'pacman' 'sed' 'tee')
 		;;
 	remove )
 		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
 		;;
-	search )
-		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
-		;;
-	completion )
-		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
-		;;
-	list )
+	search | completion | list )
 		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
 		;;
 	* )
