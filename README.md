@@ -7,6 +7,7 @@ A simple bash script for easily managing AUR installs.
 ## Installation
 ```
 git clone git@github.com:mvtab/aurx.git
+#git clone https://github.com/mvtab/aurx
 cd aurx/
 chmod +111 ./aurx
 ./aurx --help
@@ -18,7 +19,7 @@ chmod +111 ./aurx
 
 ## Usage
 ```
-aurx [OPERATION] [OPTION..] [PACKAGE..]
+aurx [OPERATION] [OPTION].. [PACKAGE]..
 ``` 
 
 ### Requirements
@@ -54,13 +55,6 @@ Capitalized long option names with `AURX_` prefix. For example for `--search-cri
 
 #### Values
 A comprehensive list of the possible configurations can be found with `aurx --help` or by using the bash completion.
-
-#### Running in containers
-There is a folder called `containers` that contains detailed instructions for running aurx in a container environment.
-
-#### Non-interactive
-Script can be ran noninteractively by changing the makepkg opts (`-M`, `--makepkg-opts`) to, for example, `'--noconfirm -sirc'`.  
-`sudo` password must be handled by the user. (see Considerations)
 
 ## Examples
 
@@ -124,12 +118,11 @@ source <(/home/user/specific/path/aurx completion bash --executable-name /home/u
 This script intentionally does not handle sudo passwords in any way.  
 
 ### Completion
-Package completions are using the AUR RPC, which has a daily rate limit of 4000 requests per IP per day.  
-Every tab does one request.
+Package completions are using the AUR HTTP RPC API, which has a daily rate limit of 4000 requests per IP per day.  
 
 ### Search installed mark
 Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.  
-The installed mark does *not* mean the package is up to date. 
+The `[installed]` mark does **not** mean the package is up to date.
 
 ### List
 If the results include not installed packages or search errors, it means an installed package is not on AUR anymore and you probably want to check that out. 

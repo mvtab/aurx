@@ -85,7 +85,7 @@ usage() {
 		  update        force install any package from AUR and delete source after.
 		  search        query the AUR database via the HTTP RPC API.
 		  completion    generate completion for the specified shell.
-		  list          search for all installed AUR packages.
+		  list          search for all locally installed AUR packages.
 		
 		Options:
 		  general:
