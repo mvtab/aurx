@@ -472,13 +472,13 @@ aur-rpc-search() {
 				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
 				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
 					INSTALLED_STRING=" [installed]"
+					if compare-versions "${PACKAGE_NAME}"; then
+						UPDATED_STRING=" [new version available]"
+					else
+						UPDATED_STRING=""
+					fi
 				else
 					INSTALLED_STRING=""
-				fi
-				if compare-versions "${PACKAGE_NAME}"; then
-					UPDATED_STRING=" [new version available]"
-				else
-					UPDATED_STRING=""
 				fi
 				echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
 					--arg UPDATED_STRING "${UPDATED_STRING}" \
