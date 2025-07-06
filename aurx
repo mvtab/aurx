@@ -601,8 +601,7 @@ search_aur_packages() {
 	case "${SEARCH_CRITERIA}" in
 		name | name-desc | depends | checkdepends | optdepends \
 			| makedepends | maintainer | submitter | provides \
-			| conflicts | replaces | keywords | groups | comaintainers \
-			| suggest)
+			| conflicts | replaces | keywords | groups | comaintainers )
 			aur_rpc_search "${TARGET_KEYWORDS}"
 			;;
 		suggest )
