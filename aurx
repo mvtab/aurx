@@ -181,7 +181,7 @@ print_error() {
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
 		30 )
-			echo "[!] One of the following packages could not be found: ${TARGET_KEYWORDS[*]}."
+			echo "[!] Could not find one of the searched packages."
 			;;
 		50 | 51 )
 			echo "[-] getopt not working properly."
