@@ -305,7 +305,7 @@ aurx_completion() {
 				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
-				                COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | jq -r '.[]' | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
+				                COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} search --search-criteria suggest \${CURRENT_WORD} | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\$(cat ${PERSISTENT_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " completion " | tr " " "\n" | sort | uniq -D) ]]; then
