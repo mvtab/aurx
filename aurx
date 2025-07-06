@@ -21,10 +21,11 @@ GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-pa
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--mark-update" "-P" "--parallel")
 COMPLETION_OPTIONS=("-e" "--executable-name")
+LIST_OPTIONS=("-u" "--mark-update" "-P" "--parallel")
 AVAILABLE_COMPLETIONS=("bash")
-SEARCH_CRITERIA_VALUES=("name" "name-desc" "maintainer" "depends" "makedepends" "optdepends" "checkdepends" "suggest")
+SEARCH_CRITERIA_VALUES=("name" "name-desc" "depends" "checkdepends" "optdepends" "makedepends" "maintainer" "submitter" "provides" "conflicts" "replaces" "keywords" "groups" "comaintainers" "suggest")
 COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
 SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
 ORDER_BY_VALUES=("ascending" "descending")
@@ -42,10 +43,11 @@ KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
 MAINTAINED=${AURX_MAINTAINED:-false}
 NO_MARK_INSTALLED=${AURX_NO_MARK_INSTALLED:-false}
-NO_MARK_UPDATE=${AURX_NO_MARK_UPDATE:-false}
+MARK_UPDATE=${AURX_MARK_UPDATE:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
+PARALLEL=${AURX_PARALLEL:-10}
 PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
@@ -114,6 +116,11 @@ usage() {
 		  -R, --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
 
 		  search:
+		  -m, --maintained                      filter out unmaintained packages.
+		  -u, --mark-update                     check for updates while searching and mark them.
+		  -i, --no-mark-installed               don't show the '[installed]' mark.
+		  -O, --no-out-of-date                  filter out all out of date packages.
+		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
 		                                        "name", "name-desc", "maintainer", "depends",
@@ -124,10 +131,6 @@ usage() {
 		                                        "votes", "popularity".
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
 		                                        "ascending", "descending".
-		  -i, --no-mark-installed               don't show the '[installed]' mark.
-		  -u, --no-mark-update                  don't show the '[new version available]' mark.
-		  -O, --no-out-of-date                  filter out all out of date packages.
-		  -m, --maintained                      filter out unmaintained packages.
 		
 		  update:
 		  -B, --block-overwrite                 don't overwrite existing sources.
@@ -136,6 +139,10 @@ usage() {
 		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+
+		  list:
+		  -u, --mark-update                     check for updates while searching and mark them.
+		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
@@ -175,7 +182,7 @@ print_error() {
 			echo "[!] Could not update \"${SELECTED_PACKAGE}\"."
 			;;
 		40 )
-			echo "[!] No search results found for \"${SELECTED_PACKAGE}\"."
+			echo "[!] One of the following packages could not be found: ${TARGET_KEYWORDS[*]}."
 			;;
 		50 | 51 )
 			echo "[-] getopt not working properly."
@@ -239,6 +246,9 @@ print_error() {
 		70)
 			echo "[-] Could not find PKGBUILD for \"${SELECTED_PACKAGE}\" with comparison criteria \"pkgbuild\"."
 			;;
+		71)
+			echo "[-] Internal error during execution phase."
+			;;
 		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
 			;;
@@ -261,6 +271,7 @@ aurx_completion() {
 				        local UPDATE_OPTIONS="${UPDATE_OPTIONS[*]}"
 				        local SEARCH_OPTIONS="${SEARCH_OPTIONS[*]}"
 				        local COMPLETION_OPTIONS="${COMPLETION_OPTIONS[*]}"
+				        local LIST_OPTIONS="${LIST_OPTIONS[*]}"
 				        local AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[*]}"
 				        local SEARCH_CRITERIA_VALUES="${SEARCH_CRITERIA_VALUES[*]}"
 				        local COMPARISON_CRITERIA_VALUES="${COMPARISON_CRITERIA_VALUES[*]}"
@@ -279,6 +290,8 @@ aurx_completion() {
 				                        COMPREPLY+=( \$(compgen -W "\${SEARCH_OPTIONS}" -- "\${CURRENT_WORD}") )
 				        	elif [[ \${COMP_WORDS[*]} =~ " completion " ]]; then
 				                        COMPREPLY+=( \$(compgen -W "\${COMPLETION_OPTIONS}" -- "\${CURRENT_WORD}") )
+				        	elif [[ \${COMP_WORDS[*]} =~ " list " ]]; then
+				                        COMPREPLY+=( \$(compgen -W "\${LIST_OPTIONS}" -- "\${CURRENT_WORD}") )
 				                fi
 				        elif [[ \${LAST_WORD} == "--search-criteria" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SEARCH_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
@@ -451,65 +464,83 @@ write_package_list() {
 }
 
 aur_rpc_search() {
-	local TARGET_KEYWORD="${1}"
+	local TARGET_KEYWORDS="${*}"
 	local RESULTS
-	RESULTS=$(curl "https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" 2> /dev/null)
-	RESULTS=$(echo "${RESULTS}" | jq -r ".results | sort_by(.${SORT_BY})")
-	if [[ "${ORDER_BY}" == "descending" ]]; then
-		RESULTS=$(echo "${RESULTS}" | jq -r 'reverse')
-	fi
-	if ${NO_OUT_OF_DATE}; then
-		RESULTS=$(echo "${RESULTS}" | jq -r '[.[] | select(.OutOfDate == null)]')
-	fi
-	if ${MAINTAINED}; then
-		RESULTS=$(echo "${RESULTS}" | jq -r '[.[] | select(.Maintainer != null)]')
-	fi
-	RESULTS=$(echo "${RESULTS}" | jq -r ".[:${SEARCH_RESULTS}]")
+	declare -a REQUESTS
 
-	if [[ $(command -v pacman) ]]; then
-		RESULTS=$(
-			echo "${RESULTS}" | jq -c '.[]' | while read -r TEMP_DICT; do
-				local INSTALLED_STRING
-				local UPDATED_STRING
-				local PACKAGE_NAME
-			
-				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
-				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
-					if ! ${NO_MARK_INSTALLED}; then
+	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
+		REQUESTS+=( "https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}" )
+	done
+
+	RESULTS=$(curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
+
+	echo ${RESULTS} | jq -c ".results" | while read -r RESULT; do
+
+		if [[ "${RESULT}" == "[]" ]]; then
+			print_error 40
+			continue
+		fi
+
+		RESULT=$(echo "${RESULT}" | jq -r "sort_by(.${SORT_BY})")
+		if [[ "${ORDER_BY}" == "descending" ]]; then
+			RESULT=$(echo "${RESULT}" | jq -r 'reverse')
+		fi
+		if ${NO_OUT_OF_DATE}; then
+			RESULT=$(echo "${RESULT}" | jq -r '[.[] | select(.OutOfDate == null)]')
+		fi
+		if ${MAINTAINED}; then
+			RESULT=$(echo "${RESULT}" | jq -r '[.[] | select(.Maintainer != null)]')
+		fi
+		RESULT=$(echo "${RESULT}" | jq -r ".[:${SEARCH_RESULTS}]")
+
+
+		if [[ $(command -v pacman) ]]; then
+			RESULT=$(
+				echo "${RESULT}" | jq -c '.[]' | while read -r TEMP_DICT; do
+					local INSTALLED_STRING
+					local UPDATED_STRING
+					local PACKAGE_NAME
+				
+					PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
+					if ! ${NO_MARK_INSTALLED} && pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
 						INSTALLED_STRING=" [installed]"
+						if ${MARK_UPDATE} && compare_versions "${PACKAGE_NAME}"; then
+							UPDATED_STRING=" [new version available]"
+						else
+							UPDATED_STRING=""
+						fi
 					else
 						INSTALLED_STRING=""
-					fi
-					if compare_versions "${PACKAGE_NAME}" && ! ${NO_MARK_UPDATE}; then
-						UPDATED_STRING=" [new version available]"
-					else
 						UPDATED_STRING=""
 					fi
-				else
-					INSTALLED_STRING=""
-					UPDATED_STRING=""
-				fi
-				echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
-					--arg UPDATED_STRING "${UPDATED_STRING}" \
-					'. + {"InstalledString": $INSTALLED_STRING, "UpdatedString": $UPDATED_STRING}'
-			done | jq -s '.'
-		)
-	fi
-
-	RESULTS=$(echo "${RESULTS}" \
-		| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.InstalledString)\(.UpdatedString) \n\t\(.Description)\"")
-	if [[ -z "${RESULTS}" ]]; then
-		return 1
-	fi
-	echo "${RESULTS}"
+					echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
+						--arg UPDATED_STRING "${UPDATED_STRING}" \
+						'. + {"InstalledString": $INSTALLED_STRING, "UpdatedString": $UPDATED_STRING}'
+				done | jq -s '.'
+			)
+		fi
+	
+		RESULT=$(echo "${RESULT}" \
+			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.InstalledString)\(.UpdatedString) \n\t\(.Description)\"")
+		echo "${RESULT}"
+	done
 }
 
 aur_rpc_suggest() {
-	local TARGET_KEYWORD="${1}"
+	local TARGET_KEYWORDS="${*}"
 	local RESULTS
-	RESULTS=$(curl \
-		"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null \
-		| jq -r ".[:${SEARCH_RESULTS}]" 2> /dev/null)
+	declare -a REQUESTS
+	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
+		REQUESTS+=( "https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" )
+	done
+
+	RESULTS=$(curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
+	RESULTS=$(
+		for RESULT in $(echo "${RESULTS}"); do
+			echo "${RESULT}" | jq -r ".[:${SEARCH_RESULTS}] | .[]" 2> /dev/null
+		done
+	)
+
 	echo "${RESULTS}"
 }
 
@@ -582,14 +613,14 @@ update_aur_package() {
 }
 
 search_aur_package() {
-	local TARGET_KEYWORD=${1}
+	local TARGET_KEYWORDS="${*}"
 
 	case "${SEARCH_CRITERIA}" in
 		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends )
-			aur_rpc_search "${TARGET_KEYWORD}" || return 40
+			aur_rpc_search "${TARGET_KEYWORDS}"
 			;;
 		suggest )
-			aur_rpc_suggest "${TARGET_KEYWORD}"
+			aur_rpc_suggest "${TARGET_KEYWORDS}"
 			;;
 		* )
 			print_error 52
@@ -608,11 +639,11 @@ fi
 
 # Options.
 LONGOPTS=''
-LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
-LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCdfhkKmiOuVwW'
-OPTIONS+='b:e:M:o:p:r:R:s:S:v:x:'
+OPTIONS+='b:e:M:o:p:P:r:R:s:S:v:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
@@ -681,20 +712,12 @@ while true; do
 			done
 			shift 2
 			;;
-		-o|--order-by )
-			ORDER_BY="${2}"
-			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
-				print_error 66
-				exit 66
-			fi
-			shift 2
+		-u|--mark-update )
+			MARK_UPDATE=true
+			shift
 			;;
 		-i|--no-mark-installed )
 			NO_MARK_INSTALLED=true
-			shift
-			;;
-		-u|--no-mark-update )
-			NO_MARK_UPDATE=true
 			shift
 			;;
 		-O|--no-out-of-date )
@@ -703,6 +726,10 @@ while true; do
 			;;
 		-p|--persistent-path )
 			PERSISTENT_PATH="${2}"
+			shift 2
+			;;
+		-P|--parallel )
+			PARALLEL="${2}"
 			shift 2
 			;;
 		-r|--search-results )
@@ -725,6 +752,14 @@ while true; do
 			if [[ ! "${SEARCH_CRITERIA_VALUES[*]}" =~ ${SEARCH_CRITERIA} ]]; then
 				print_error 52
 				exit 52
+			fi
+			shift 2
+			;;
+		-o|--order-by )
+			ORDER_BY="${2}"
+			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
+				print_error 66
+				exit 66
 			fi
 			shift 2
 			;;
@@ -895,19 +930,32 @@ if ${ALL}; then
 fi
 
 # Execution.
-for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
-	"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
-	ERROR_CODE=${?}
-	case "${ERROR_CODE}" in
-		0 )
-			;;
-		10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 | 40 )
-			print_error ${ERROR_CODE}
-			;;
-		* )
-			print_error 61
-			exit ${ERROR_CODE}
-			;;
-	esac
-done
+case "${CURRENT_OPERATION}" in
+	install | update | remove )
+		for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
+			"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
+			ERROR_CODE=${?}
+		done
+		;;
+	search )
+		search_aur_package "${TARGET_PACKAGES[@]}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
+		ERROR_CODE=${?}
+		;;
+	* )
+		print_error 71
+		exit 71
+		;;
+esac
+
+case ${ERROR_CODE} in
+	0 )
+		;;
+	10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 )
+		print_error "${ERROR_CODE}"
+		;;
+	* )
+		print_error 61
+		exit "${ERROR_CODE}"
+		;;
+esac
 
