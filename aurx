@@ -450,6 +450,8 @@ remove_from_package_list() {
 	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list; then
 		return 2
 	fi
+	cat "${PERSISTENT_PATH}/package_list" | sort | uniq \
+		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
 
@@ -461,6 +463,8 @@ write_package_list() {
 	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list; then
 		return 1
 	fi
+	cat "${PERSISTENT_PATH}/package_list" | sort | uniq \
+		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
 
