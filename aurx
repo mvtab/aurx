@@ -936,27 +936,25 @@ case "${CURRENT_OPERATION}" in
 		for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 			"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 			ERROR_CODE=${?}
+			case ${ERROR_CODE} in
+				0 )
+					;;
+				10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 )
+					print_error "${ERROR_CODE}"
+					;;
+				* )
+					print_error 61
+					exit "${ERROR_CODE}"
+					;;
+			esac
 		done
 		;;
 	search )
 		search_aur_packages "${TARGET_PACKAGES[@]}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
-		ERROR_CODE=${?}
 		;;
 	* )
 		print_error 71
 		exit 71
-		;;
-esac
-
-case ${ERROR_CODE} in
-	0 )
-		;;
-	10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 )
-		print_error "${ERROR_CODE}"
-		;;
-	* )
-		print_error 61
-		exit "${ERROR_CODE}"
 		;;
 esac
 
