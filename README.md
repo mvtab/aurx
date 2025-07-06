@@ -127,6 +127,10 @@ The `[installed]` mark does **not** mean the package is up to date.
 ### List
 If the results include not installed packages or search errors, it means an installed package is not on AUR anymore and you probably want to check that out. 
 
+### Containers
+You can find an example Containerfile in the root of the repository. 
+You will need to set an user password as soon as you're in a runtime environment.
+
 ## Changelog
 
 ### 2024.09.16 Breaking changes - Default source directory changed.
