@@ -893,18 +893,6 @@ if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
 	exit 59
 fi
 
-# Completion early execution.
-if [[ "${CURRENT_OPERATION}" == completion ]]; then
-	COMPLETION_TYPE="${TARGET_PACKAGES[0]}"
-	if [[ "${AVAILABLE_COMPLETIONS[*]}" =~ ${COMPLETION_TYPE} ]]; then
-		aurx_completion "${COMPLETION_TYPE}"
-		exit 0
-	else
-		print_error 62
-		exit 62
-	fi
-fi
-
 # Directories.
 if [[ ! -d "${SOURCE_PATH}" ]]; then
 	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
@@ -951,6 +939,18 @@ case "${CURRENT_OPERATION}" in
 		;;
 	search )
 		search_aur_packages "${TARGET_PACKAGES[@]}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
+		;;
+	completion )
+		if [[ "${CURRENT_OPERATION}" == completion ]]; then
+			COMPLETION_TYPE="${TARGET_PACKAGES[0]}"
+			if [[ "${AVAILABLE_COMPLETIONS[*]}" =~ ${COMPLETION_TYPE} ]]; then
+				aurx_completion "${COMPLETION_TYPE}"
+				exit 0
+			else
+				print_error 62
+				exit 62
+			fi
+		fi
 		;;
 	* )
 		print_error 71
