@@ -143,6 +143,7 @@ usage() {
 		  list:
 		  -u, --mark-update                     check for updates while searching and mark them.
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
+		  -i, --no-mark-installed               don't show the '[installed]' mark.
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
