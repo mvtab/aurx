@@ -21,7 +21,7 @@ GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-pa
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 AVAILABLE_COMPLETIONS=("bash")
 SEARCH_CRITERIA_VALUES=("name" "name-desc" "maintainer" "depends" "makedepends" "optdepends" "checkdepends" "suggest")
@@ -41,6 +41,8 @@ FORCE=${AURX_FORCE:-false}
 KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
 MAINTAINED=${AURX_MAINTAINED:-false}
+NO_MARK_INSTALLED=${AURX_NO_MARK_INSTALLED:-false}
+NO_MARK_UPDATE=${AURX_NO_MARK_UPDATE:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
@@ -122,6 +124,8 @@ usage() {
 		                                        "votes", "popularity".
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
 		                                        "ascending", "descending".
+		  -i, --no-mark-installed               don't show the '[installed]' mark.
+		  -u, --no-mark-update                  don't show the '[new version available]' mark.
 		  -O, --no-out-of-date                  filter out all out of date packages.
 		  -m, --maintained                      filter out unmaintained packages.
 		
@@ -471,8 +475,12 @@ aur_rpc_search() {
 			
 				PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
 				if pacman -Qi "${PACKAGE_NAME}" 1>/dev/null 2>&1; then
-					INSTALLED_STRING=" [installed]"
-					if compare_versions "${PACKAGE_NAME}"; then
+					if ! ${NO_MARK_INSTALLED}; then
+						INSTALLED_STRING=" [installed]"
+					else
+						INSTALLED_STRING=""
+					fi
+					if compare_versions "${PACKAGE_NAME}" && ! ${NO_MARK_UPDATE}; then
 						UPDATED_STRING=" [new version available]"
 					else
 						UPDATED_STRING=""
@@ -600,10 +608,10 @@ fi
 
 # Options.
 LONGOPTS=''
-LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
+LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
 LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
-OPTIONS+='aBcCdfhkKmOVwW'
+OPTIONS+='aBcCdfhkKmiOuVwW'
 OPTIONS+='b:e:M:o:p:r:R:s:S:v:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
@@ -680,6 +688,14 @@ while true; do
 				exit 66
 			fi
 			shift 2
+			;;
+		-i|--no-mark-installed )
+			NO_MARK_INSTALLED=true
+			shift
+			;;
+		-u|--no-mark-update )
+			NO_MARK_UPDATE=true
+			shift
 			;;
 		-O|--no-out-of-date )
 			NO_OUT_OF_DATE=true
