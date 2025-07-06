@@ -597,26 +597,6 @@ remove_aur_package() {
 	return 0
 }
 
-update_aur_package() {
-	local TARGET_PACKAGE="${1}"
-	local SOURCE_PATH='/tmp'
-	local VERIFY_VERSIONS=true
-
-	if ! ${KEEP_SOURCES}; then
-		local CLEANUP=true
-	fi
-	if ! ${KEEP_FAILED_SOURCES}; then
-		local CLEAN_OPERATION=true
-	fi
-	if ! ${BLOCK_OVERWRITE}; then
-		local OVERWRITE_EXISTING=true
-	fi
-
-	install_aur_package "${TARGET_PACKAGE}" || return 30
-
-	return 0
-}
-
 search_aur_packages() {
 	local TARGET_KEYWORDS="${*}"
 
@@ -908,6 +888,22 @@ if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
 	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
 fi
 
+# Update operation transformation.
+if [[ ${CURRENT_OPERATION} == update ]]; then
+	SOURCE_PATH='/tmp'
+	VERIFY_VERSIONS=true
+	if ! ${KEEP_SOURCES}; then
+		CLEANUP=true
+	fi
+	if ! ${KEEP_FAILED_SOURCES}; then
+		CLEAN_OPERATION=true
+	fi
+	if ! ${BLOCK_OVERWRITE}; then
+		OVERWRITE_EXISTING=true
+	fi
+	CURRENT_OPERATION="install"
+fi
+
 # List operation transformation.
 if [[ ${CURRENT_OPERATION} == list ]]; then
 	ALL=true
@@ -924,14 +920,14 @@ fi
 
 # Execution.
 case "${CURRENT_OPERATION}" in
-	install | update | remove )
+	install | remove )
 		for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 			"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 			ERROR_CODE=${?}
 			case ${ERROR_CODE} in
 				0 )
 					;;
-				10 | 11 | 12 | 13 | 14 | 20 | 21 | 30 )
+				10 | 11 | 12 | 13 | 14 | 20 | 21 )
 					print_error "${ERROR_CODE}"
 					;;
 				* )
