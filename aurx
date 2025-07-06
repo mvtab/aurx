@@ -188,7 +188,7 @@ print_error() {
 			;;
 		52 )
 			echo "[-] Unknown search criteria: \"${SEARCH_CRITERIA}\"."
-			echo "[i] Possible options are: name, name-desc, maintainer, depends, makedepends, optdepends, checkdepends, suggest."
+			echo "[i] Possible options are: name, name-desc, depends, checkdepends, optdepends, makedepends, maintainer, submitter, provides, conflicts, replaces, keywords, groups, comaintainers, suggest."
 			;;
 		53 )
 			echo "[-] Unknown error while parsing options."
@@ -599,7 +599,10 @@ search_aur_packages() {
 	local TARGET_KEYWORDS="${*}"
 
 	case "${SEARCH_CRITERIA}" in
-		name | name-desc | maintainer | depends | makedepends | optdepends | checkdepends )
+		name | name-desc | depends | checkdepends | optdepends \
+			| makedepends | maintainer | submitter | provides \
+			| conflicts | replaces | keywords | groups | comaintainers \
+			| suggest)
 			aur_rpc_search "${TARGET_KEYWORDS}"
 			;;
 		suggest )
