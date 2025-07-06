@@ -116,6 +116,7 @@ source <(/home/user/specific/path/aurx completion bash --executable-name /home/u
 
 ### Sudo password
 This script intentionally does not handle sudo passwords in any way.  
+It only prompts for sudo when removing packages with `pacman` and `makepkg` does it's own sudo calls. 
 
 ### Completion
 Package completions are using the AUR HTTP RPC API, which has a daily rate limit of 4000 requests per IP per day.  
