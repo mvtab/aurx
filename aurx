@@ -180,9 +180,6 @@ print_error() {
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
 		30 )
-			echo "[!] Could not update \"${SELECTED_PACKAGE}\"."
-			;;
-		40 )
 			echo "[!] One of the following packages could not be found: ${TARGET_KEYWORDS[*]}."
 			;;
 		50 | 51 )
@@ -482,7 +479,7 @@ aur_rpc_search() {
 	echo ${RESULTS} | jq -c ".results" | while read -r RESULT; do
 
 		if [[ "${RESULT}" == "[]" ]]; then
-			print_error 40
+			print_error 30
 			continue
 		fi
 
