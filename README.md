@@ -12,7 +12,7 @@ cd aurx/
 chmod +111 ./aurx
 ./aurx --help
 
-## Soft link and completion for comfort.
+## Hard link and completion for comfort.
 #sudo ln ${PWD}/aurx /usr/bin/aurx
 #source <(aurx completion bash)
 ```
