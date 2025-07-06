@@ -613,7 +613,7 @@ update_aur_package() {
 	return 0
 }
 
-search_aur_package() {
+search_aur_packages() {
 	local TARGET_KEYWORDS="${*}"
 
 	case "${SEARCH_CRITERIA}" in
@@ -939,7 +939,7 @@ case "${CURRENT_OPERATION}" in
 		done
 		;;
 	search )
-		search_aur_package "${TARGET_PACKAGES[@]}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
+		search_aur_packages "${TARGET_PACKAGES[@]}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 		ERROR_CODE=${?}
 		;;
 	* )
