@@ -58,33 +58,38 @@ A comprehensive list of the possible configurations can be found with `aurx --he
 
 ## Examples
 
-##### Install a new package or an existing source.
+##### Install a new package from AUR or an existing source from the work directory.
 ```bash
-aurx install test
+aurx install some-package
 ```
 
-##### Remove a package from the system and the script's package list, with custom pacman remove flags.
+##### Remove a package with custom pacman remove flags.
 ```bash
-aurx remove test --remove-opts '-Rsncu'
+aurx remove some-package --remove-opts '-Rsncu'
 ```
 
 ##### Download a package to modify before install.
 ```bash
-aurx install test --download-only --source-path /tmp
+aurx install some-package --download-only --source-path /tmp
 cd /tmp/test
 # modifications
 cd -
-aurx install test --source-path /tmp
+aurx install some-package --source-path /tmp
 ```
 
 ##### Update a package only if the present source's version is higher than the installed one.
 ```bash
-aurx install test --verify-versions --comparison-criteria pkgbuild
+aurx install some-package --verify-versions --comparison-criteria pkgbuild
 ```
 
 ##### Update a package to the latest version available online and delete source after.
 ```bash
-aurx update test
+aurx update some-package
+```
+
+##### List all installed packages and mark available updates.
+```bash
+aurx list --mark-update
 ```
 
 ##### Update all installed packages.
@@ -94,7 +99,7 @@ aurx update --all
 
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
 ```bash
-aurx search test --no-out-of-date --maintained --sort-by votes
+aurx search some-package --no-out-of-date --maintained --sort-by votes
 ```
 
 ##### Grab the all-time first 5 submitted packages of a maintainer.
@@ -104,18 +109,18 @@ aurx search SomeMaintainerName --search-criteria maintainer --sort-by firstsubmi
 
 ##### Grab the latest 5 modified packages that have gcc as makedepends.
 ```bash
-aurx search gcc --search-criteria makedepends --sort-by lastmodified --search-results 5
+aurx search some-package --search-criteria makedepends --sort-by lastmodified --search-results 5
 ```
 
 ##### Get bash completion for custom executable name (where `aurx` is not correct).
 ```bash
-source <(/home/user/specific/path/aurx completion bash --executable-name /home/user/specific/path/aurx)
+source <(/specific/path/aurx completion bash --executable-name /specific/path/aurx)
 ```
 
 ## Considerations
 
 ### Sudo password
-This script intentionally does not handle sudo passwords in any way.  
+This script intentionally does not handle sudo passwords directly in any way.  
 It only prompts for sudo when removing packages with `pacman` and `makepkg` does it's own sudo calls. 
 
 ### Completion
@@ -123,7 +128,6 @@ Package completions are using the AUR HTTP RPC API, which has a daily rate limit
 
 ### Search installed mark
 Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.  
-The `[installed]` mark does **not** mean the package is up to date.
 
 ### List
 If the results include not installed packages or search errors, it means an installed package is not on AUR anymore and you probably want to check that out. 
