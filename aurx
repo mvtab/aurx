@@ -123,9 +123,10 @@ usage() {
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
-		                                        "name", "name-desc", "maintainer", "depends",
-		                                        "makedepends", "optdepends", "checkdepends",
-		                                        "suggest".
+		                                        "name", "name-desc", "depends", "checkdepends",
+		                                        "optdepends", "makedepends", "maintainer",
+		                                        "submitter", "provides", "conflicts", "replaces",
+		                                        "keywords", "groups", "comaintainers", "suggest".
 		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
 		                                        "popularity", "firstsubmitted", "lastmodified",
 		                                        "votes", "popularity".
