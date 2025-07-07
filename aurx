@@ -21,9 +21,9 @@ GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-pa
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--mark-update" "-P" "--parallel")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel")
 COMPLETION_OPTIONS=("-e" "--executable-name")
-LIST_OPTIONS=("-u" "--mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
+LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
 SEARCH_CRITERIA_VALUES=("name" "name-desc" "depends" "checkdepends" "optdepends" "makedepends" "maintainer" "submitter" "provides" "conflicts" "replaces" "keywords" "groups" "comaintainers" "suggest")
 COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
@@ -43,7 +43,7 @@ KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
 MAINTAINED=${AURX_MAINTAINED:-false}
 NO_MARK_INSTALLED=${AURX_NO_MARK_INSTALLED:-false}
-MARK_UPDATE=${AURX_MARK_UPDATE:-false}
+NO_MARK_UPDATE=${AURX_NO_MARK_UPDATE:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
@@ -117,8 +117,8 @@ usage() {
 
 		  search:
 		  -m, --maintained                      filter out unmaintained packages.
-		  -u, --mark-update                     check for updates while searching and mark them.
 		  -i, --no-mark-installed               don't show the '[installed]' mark.
+		  -u, --no-mark-update                  do not check for updates while searching.
 		  -O, --no-out-of-date                  filter out all out of date packages.
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
@@ -142,9 +142,9 @@ usage() {
 		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  list:
-		  -u, --mark-update                     check for updates while searching and mark them.
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -i, --no-mark-installed               don't show the '[installed]' mark.
+		  -u, --no-mark-update                  do not check for updates while searching.
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
@@ -516,7 +516,7 @@ aur_rpc_search() {
 							INSTALLED_STRING=" [installed]"
 						fi
 
-						if ${MARK_UPDATE} && [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
+						if ! ${NO_MARK_UPDATE} && [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
 							UPDATED_STRING=" [new version available]"
 						fi
 					fi
@@ -628,7 +628,7 @@ fi
 
 # Options.
 LONGOPTS=''
-LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
+LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
 LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCdfhkKmiOuVwW'
@@ -701,8 +701,8 @@ while true; do
 			done
 			shift 2
 			;;
-		-u|--mark-update )
-			MARK_UPDATE=true
+		-u|--no-mark-update )
+			NO_MARK_UPDATE=true
 			shift
 			;;
 		-i|--no-mark-installed )
