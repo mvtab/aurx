@@ -448,7 +448,7 @@ remove_from_package_list() {
 	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list; then
 		return 2
 	fi
-	cat "${PERSISTENT_PATH}/package_list" | sort | uniq \
+	sort "${PERSISTENT_PATH}/package_list" \
 		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
@@ -461,7 +461,7 @@ write_package_list() {
 	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list; then
 		return 1
 	fi
-	cat "${PERSISTENT_PATH}/package_list" | sort | uniq \
+	sort "${PERSISTENT_PATH}/package_list" \
 		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
@@ -477,7 +477,7 @@ aur_rpc_search() {
 
 	RESULTS=$(curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
 
-	echo ${RESULTS} | jq -c ".results" | while read -r RESULT; do
+	echo "${RESULTS}" | jq -c ".results" | while read -r RESULT; do
 
 		if [[ "${RESULT}" == "[]" ]]; then
 			print_error 30
@@ -512,7 +512,7 @@ aur_rpc_search() {
 							| grep -e "Version" | awk '{ print $3 }')
 						ONLINE_VERSION=$(echo "${TEMP_DICT}" | jq -r '.Version')
 						
-						if [[ ! -z "${INSTALLED_VERSION}" ]]; then
+						if [[ -n "${INSTALLED_VERSION}" ]]; then
 							INSTALLED_STRING=" [installed]"
 						fi
 
@@ -543,7 +543,7 @@ aur_rpc_suggest() {
 
 	RESULTS=$(curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
 	RESULTS=$(
-		for RESULT in $(echo "${RESULTS}"); do
+		for RESULT in ${RESULTS}; do
 			echo "${RESULT}" | jq -r ".[:${SEARCH_RESULTS}] | .[]" 2> /dev/null
 		done
 	)
