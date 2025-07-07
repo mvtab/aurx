@@ -181,7 +181,7 @@ print_error() {
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
 		30 )
-			echo "[!] Could not find one of the searched packages."
+			echo "[!] Could not find ${#PACKAGES_NOT_FOUND[@]} of the searched packages."
 			;;
 		50 | 51 )
 			echo "[-] getopt not working properly."
@@ -469,6 +469,8 @@ write_package_list() {
 aur_rpc_search() {
 	local TARGET_KEYWORDS="${*}"
 	local RESULTS
+	declare -a SPLIT_RESULTS
+	declare -a PACKAGES_NOT_FOUND
 	declare -a REQUESTS
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
@@ -476,11 +478,12 @@ aur_rpc_search() {
 	done
 
 	RESULTS=$(curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
+	readarray -t SPLIT_RESULTS < <(echo "${RESULTS}" | jq -c ".results")
 
-	echo "${RESULTS}" | jq -c ".results" | while read -r RESULT; do
+	for RESULT in "${SPLIT_RESULTS[@]}"; do
 
 		if [[ "${RESULT}" == "[]" ]]; then
-			print_error 30
+			PACKAGES_NOT_FOUND+=( "placeholder" )
 			continue
 		fi
 
@@ -531,6 +534,10 @@ aur_rpc_search() {
 			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.InstalledString)\(.UpdatedString) \n\t\(.Description)\"")
 		echo "${RESULT}"
 	done
+	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
+		print_error 30
+		exit 30
+	fi
 }
 
 aur_rpc_suggest() {
