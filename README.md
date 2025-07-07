@@ -89,7 +89,7 @@ aurx update some-package
 
 ##### List all installed packages and mark available updates.
 ```bash
-aurx list --mark-update
+aurx list
 ```
 
 ##### Update all installed packages.
