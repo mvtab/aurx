@@ -185,7 +185,7 @@ print_error() {
 		30 )
 			local TEMP_PACKAGES
 			TEMP_PACKAGES="${PACKAGES_NOT_FOUND[*]}"
-			echo "[!] Could not find ${TEMP_PACKAGES//\ /,}."
+			echo "[!] Could not find ${TEMP_PACKAGES//\ /,\ }."
 			;;
 		50 | 51 )
 			echo "[-] getopt not working properly."
