@@ -828,12 +828,15 @@ if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 	exit 55
 fi
 shift
+
+# Take all packages.
 TARGET_PACKAGES=("${@}")
 
-# No arguments for install, remove, search, completion exception.
-if [[ ${#} -eq 0 ]] && ! ${ALL} && [[ " install remove search completion " =~ ${CURRENT_OPERATION} ]]; then
-	print_error 56
-	exit 56
+# Take all stdin packages.
+if ! [[ -t 0 ]]; then
+	while read -r STDIN_OPT; do
+		TARGET_PACKAGES+=("${STDIN_OPT}")
+	done
 fi
 
 # Root + install/update exception.
@@ -955,6 +958,12 @@ if ${ALL}; then
 			TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
 		fi
 	done < "${PERSISTENT_PATH}"/package_list
+fi
+
+# No packages and all left operations need them.
+if [[ -z "${TARGET_PACKAGES}" ]]; then
+	print_error 56
+	exit 56
 fi
 
 # Execution.
