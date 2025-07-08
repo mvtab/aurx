@@ -10,6 +10,7 @@
 # Variables & Arrays
 # Functions
 # Options parse
+# Composed metadata
 # Input sanity checks
 # Execution
 #
@@ -25,10 +26,10 @@ SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by
 COMPLETION_OPTIONS=("-e" "--executable-name")
 LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
-SEARCH_CRITERIA_VALUES=("name" "name-desc" "depends" "checkdepends" "optdepends" "makedepends" "maintainer" "submitter" "provides" "conflicts" "replaces" "keywords" "groups" "comaintainers" "suggest")
 COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
-SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
 ORDER_BY_VALUES=("ascending" "descending")
+SEARCH_CRITERIA_VALUES=("name" "name-desc" "depends" "checkdepends" "optdepends" "makedepends" "maintainer" "submitter" "provides" "conflicts" "replaces" "keywords" "groups" "comaintainers" "suggest")
+SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
 
 # Variables.
 ALL=${AURX_ALL:-false}
@@ -347,8 +348,8 @@ compare_versions() {
 			local LATEST_VERSION
 			local PKGVER
 			local PKGREL
-			PKGVER=$(sed -n 's/pkgver=\(.*\)/\1/p' "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
-			PKGREL=$(sed -n 's/pkgrel=\(.*\)/\1/p' "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
+			PKGVER=$(sed -n 's/pkgver=\(.*\)/\1/p' "${SOURCE_PATH:?SOURCE_PATH not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
+			PKGREL=$(sed -n 's/pkgrel=\(.*\)/\1/p' "${SOURCE_PATH:?SOURCE_PATH not defined.}"/"${TARGET_PACKAGE}/PKGBUILD")
 			LATEST_VERSION="${PKGVER}-${PKGREL}"
 			;;
 		rpc )
@@ -445,7 +446,7 @@ remove_from_system() {
 remove_from_package_list() {
 	local TARGET_PACKAGE="${1}"
 	if grep -qe "^${TARGET_PACKAGE}$" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
-		sed -i "/^${TARGET_PACKAGE}$/d" "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
+		sed -i "/^${TARGET_PACKAGE}$/d" "${PERSISTENT_PATH:?PERSISTENT_PATH not defined.}"/package_list
 	else
 		return 0
 	fi
@@ -453,20 +454,20 @@ remove_from_package_list() {
 		return 2
 	fi
 	sort "${PERSISTENT_PATH}/package_list" \
-		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
+		| tee "${PERSISTENT_PATH?PERSISTENT_PATH not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
 
 write_package_list() {
 	local TARGET_PACKAGE="${1}"
 	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list 2> /dev/null; then
-		echo "${TARGET_PACKAGE}" | tee -a "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list 1> /dev/null
+		echo "${TARGET_PACKAGE}" | tee -a "${PERSISTENT_PATH:?PERSISTENT_PATH not defined.}"/package_list 1> /dev/null
 	fi
 	if ! grep -qe "${TARGET_PACKAGE}" "${PERSISTENT_PATH}"/package_list; then
 		return 1
 	fi
 	sort "${PERSISTENT_PATH}/package_list" \
-		| tee "${PERSISTENT_PATH?Persistent path not defined.}/package_list" 1> /dev/null 2>&1
+		| tee "${PERSISTENT_PATH?PERSISTENT_PATH not defined.}/package_list" 1> /dev/null 2>&1
 	return 0
 }
 
@@ -478,7 +479,7 @@ aur_rpc_search() {
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
 		REQUESTS+=("https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}")
-		REQUESTS+=("-o${REQUESTS_PATH?Requests path not defined.}/temp_request_${TARGET_KEYWORD}")
+		REQUESTS+=("-o${REQUESTS_PATH?REQUESTS_PATH not defined.}/temp_request_${TARGET_KEYWORD}")
 	done
 
 	curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" \
@@ -540,7 +541,7 @@ aur_rpc_search() {
 		echo "${RESULT}" \
 			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.StatusString) \n\t\(.Description)\""
 		
-		rm -rf "${REQUESTS_PATH?Requests path not defined.}/temp_request_${TARGET_KEYWORD}"
+		rm -rf "${REQUESTS_PATH?REQUESTS_PATH not defined.}/temp_request_${TARGET_KEYWORD}"
 	done
 
 	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
@@ -576,7 +577,7 @@ install_aur_package() {
 
 	if [[ -d "${SOURCE_PATH}"/"${TARGET_PACKAGE}" ]]; then
 		if ${WIPE_EXISTING}; then
-			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+			rm -rf "${SOURCE_PATH:?SOURCE_PATH not defined.}"/"${TARGET_PACKAGE}" || return 10
 		elif ${OVERWRITE_EXISTING} && [[ "${COMPARISON_CRITERIA}" == "rpc" ]]; then
 			pull_git_repo "${TARGET_PACKAGE}" || return 11
 		fi
@@ -591,11 +592,11 @@ install_aur_package() {
 
 	if build_makepkg_package "${TARGET_PACKAGE}"; then
 		if ${CLEANUP}; then
-			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+			rm -rf "${SOURCE_PATH:?SOURCE_PATH not defined.}"/"${TARGET_PACKAGE}" || return 10
 		fi
 	else
 		if ${CLEAN_OPERATION}; then
-			rm -rf "${SOURCE_PATH:?Source path not defined.}"/"${TARGET_PACKAGE}" || return 10
+			rm -rf "${SOURCE_PATH:?SOURCE_PATH not defined.}"/"${TARGET_PACKAGE}" || return 10
 		fi
 		return 13
 	fi
@@ -807,8 +808,15 @@ while true; do
 	esac
 done
 
-# Input sanity checks.
+# Composed metadata.
+REQUIRED_DIRECTORIES=("${SOURCE_PATH?SOURCE_PATH not defined.}" \
+	"${PERSISTENT_PATH?PERSISTENT_PATH not defined.}" \
+	"${REQUESTS_PATH?REQUESTS_PATH not defined.}")
+REQUIRED_FILES=("${PERSISTENT_PATH?PERSISTENT_PATH not defined.}/package_list")
 
+
+# Input sanity checks.
+#
 # Current operation.
 if [[ ${#} -eq 0 ]]; then
 	print_error 54
@@ -901,19 +909,19 @@ if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
 	exit 59
 fi
 
-# Directories.
-if [[ ! -d "${REQUESTS_PATH}" ]]; then
-	mkdir -p "${REQUESTS_PATH?Requests path not defined.}"
-fi
-if [[ ! -d "${SOURCE_PATH}" ]]; then
-	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
-fi
-if [[ ! -d "${PERSISTENT_PATH}" ]]; then
-	mkdir -p "${PERSISTENT_PATH:?Persistent path not defined.}"
-fi
-if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
-	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
-fi
+# Required directories.
+for REQUIRED_DIRECTORY in "${REQUIRED_DIRECTORIES[@]}"; do
+	if [[ ! -d "${REQUIRED_DIRECTORY}" ]]; then
+		mkdir -p "${REQUIRED_DIRECTORY}"
+	fi
+done
+
+# Required files.
+for REQUIRED_FILE in "${REQUIRED_FILES[@]}"; do
+	if [[ ! -f "${REQUIRED_FILE}" ]]; then
+		touch "${REQUIRED_FILE}"
+	fi
+done
 
 # Operation transformations.
 case "${CURRENT_OPERATION}" in
