@@ -513,16 +513,23 @@ aur_rpc_search() {
 					if ! ${NO_MARK_INSTALLED}; then
 						INSTALLED_VERSION=$(pacman -Qi "${PACKAGE_NAME}" 2> /dev/null \
 							| grep -e "Version" | awk '{ print $3 }')
-						ONLINE_VERSION=$(echo "${TEMP_DICT}" | jq -r '.Version')
 						
 						if [[ -n "${INSTALLED_VERSION}" ]]; then
 							INSTALLED_STRING=" [installed]"
+						else
+							INSTALLED_STRING=""
 						fi
 
-						if ! ${NO_MARK_UPDATE} && [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
+					fi
+					if ! ${NO_MARK_UPDATE} && [[ -n "${INSTALLED_VERSION}" ]]; then
+						ONLINE_VERSION=$(echo "${TEMP_DICT}" | jq -r '.Version')
+						if [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
 							UPDATED_STRING=" [new version available]"
+						else
+							UPDATED_STRING=""
 						fi
 					fi
+
 					echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
 						--arg UPDATED_STRING "${UPDATED_STRING}" \
 						'. + {"InstalledString": $INSTALLED_STRING, "UpdatedString": $UPDATED_STRING}'
