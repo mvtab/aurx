@@ -524,6 +524,7 @@ aur_rpc_search() {
 					if ! ${NO_MARK_UPDATE} && [[ -n "${INSTALLED_VERSION}" ]]; then
 						ONLINE_VERSION=$(echo "${TEMP_DICT}" | jq -r '.Version')
 						if [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
+							INSTALLED_STRING=""
 							UPDATED_STRING=" [new version available]"
 						else
 							UPDATED_STRING=""
