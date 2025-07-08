@@ -508,6 +508,7 @@ aur_rpc_search() {
 					local INSTALLED_VERSION
 					local ONLINE_VERSION
 
+					STATUS_STRING=""
 					PACKAGE_NAME=$(echo "${TEMP_DICT}" | jq -r '.Name')
 					if ! ${NO_MARK_INSTALLED} || ! ${NO_MARK_UPDATE}; then
 						INSTALLED_VERSION=$(pacman -Qi "${PACKAGE_NAME}" 2> /dev/null \
@@ -516,8 +517,6 @@ aur_rpc_search() {
 
 					if ! ${NO_MARK_INSTALLED} && [[ -n "${INSTALLED_VERSION}" ]]; then
 						STATUS_STRING=" [installed]"
-					else
-						STATUS_STRING=""
 					fi
 
 					if ! ${NO_MARK_UPDATE} && [[ -n "${INSTALLED_VERSION}" ]]; then
