@@ -130,7 +130,7 @@ Package completions are using the AUR HTTP RPC API, which has a daily rate limit
 Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.  
 
 ### List
-If the results include not installed packages or search errors, it means an installed package is not on AUR anymore and you probably want to check that out. 
+If the results include not installed packages or search errors, it means an installed package is not on AUR anymore or it got removed from the system. If it's installed on the system then it's missing from AUR. 
 
 ### Containers
 You can find an example Containerfile in the root of the repository.  
