@@ -503,8 +503,7 @@ aur_rpc_search() {
 		if [[ $(command -v pacman) ]]; then
 			RESULT=$(
 				echo "${RESULT}" | jq -c '.[]' | while read -r TEMP_DICT; do
-					local INSTALLED_STRING
-					local UPDATED_STRING
+					local STATUS_STRING
 					local PACKAGE_NAME
 					local INSTALLED_VERSION
 					local ONLINE_VERSION
@@ -515,32 +514,27 @@ aur_rpc_search() {
 							| grep -e "Version" | awk '{ print $3 }')
 						
 						if [[ -n "${INSTALLED_VERSION}" ]]; then
-							INSTALLED_STRING=" [installed]"
+							STATUS_STRING=" [installed]"
 						else
-							INSTALLED_STRING=""
+							STATUS_STRING=""
 						fi
 
 					fi
 					if ! ${NO_MARK_UPDATE} && [[ -n "${INSTALLED_VERSION}" ]]; then
 						ONLINE_VERSION=$(echo "${TEMP_DICT}" | jq -r '.Version')
 						if [[ "${INSTALLED_VERSION}" != "${ONLINE_VERSION}" ]]; then
-							INSTALLED_STRING=""
-							UPDATED_STRING=" [new version available]"
-						else
-							UPDATED_STRING=""
+							STATUS_STRING=" [new version available]"
 						fi
 					fi
 
-					echo "${TEMP_DICT}" | jq --arg INSTALLED_STRING "${INSTALLED_STRING}" \
-						--arg UPDATED_STRING "${UPDATED_STRING}" \
-						'. + {"InstalledString": $INSTALLED_STRING, "UpdatedString": $UPDATED_STRING}'
+					echo "${TEMP_DICT}" | jq --arg STATUS_STRING "${STATUS_STRING}" \
+						'. + {"StatusString": $STATUS_STRING}'
 				done | jq -s '.'
 			)
 		fi
 	
-		RESULT=$(echo "${RESULT}" \
-			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.InstalledString)\(.UpdatedString) \n\t\(.Description)\"")
-		echo "${RESULT}"
+		echo "${RESULT}" \
+			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.StatusString) \n\t\(.Description)\""
 	done
 	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
 		print_error 30
