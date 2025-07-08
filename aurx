@@ -21,7 +21,7 @@ GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-pa
 INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel" "-D" "--requests-directory")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel" "-D" "--requests-path")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
@@ -49,7 +49,7 @@ ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
 PARALLEL=${AURX_PARALLEL:-50}
 PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
-REQUESTS_DIRECTORY=${AURX_REQUESTS_DIRECTORY:-/tmp/aurx_requests}
+REQUESTS_PATH=${AURX_REQUESTS_PATH:-/tmp/aurx_requests}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
 SORT_BY=${AURX_SORT_BY:-popularity}
@@ -122,7 +122,7 @@ usage() {
 		  -u, --no-mark-update                  do not check for updates while searching.
 		  -O, --no-out-of-date                  filter out all out of date packages.
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
-		  -D, --requests-directory [DIR]        work directory for requests responses. ("/tmp/aurx_requests")
+		  -D, --requests-path [DIR]             work directory for requests responses. ("/tmp/aurx_requests")
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
 		                                        "name", "name-desc", "depends", "checkdepends",
@@ -476,14 +476,14 @@ aur_rpc_search() {
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
 		REQUESTS+=("https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}")
-		REQUESTS+=("-o${REQUESTS_DIRECTORY}/temp_request_${TARGET_KEYWORD}")
+		REQUESTS+=("-o${REQUESTS_PATH?Requests path not defined.}/temp_request_${TARGET_KEYWORD}")
 	done
 
 	curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" \
 		"${REQUESTS[@]}" 2> /dev/null
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
-		RESULT=$(< "${REQUESTS_DIRECTORY}/temp_request_${TARGET_KEYWORD}")
+		RESULT=$(< "${REQUESTS_PATH}/temp_request_${TARGET_KEYWORD}")
 		if [[ $(echo "${RESULT}" | jq -c ".results") == "[]" ]]; then
 			PACKAGES_NOT_FOUND+=("${TARGET_KEYWORD}")
 		fi
@@ -538,7 +538,7 @@ aur_rpc_search() {
 		echo "${RESULT}" \
 			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.StatusString) \n\t\(.Description)\""
 		
-		rm -rf "${REQUESTS_DIRECTORY?Requests directory not defined.}/temp_request_${TARGET_KEYWORD}"
+		rm -rf "${REQUESTS_PATH?Requests directory not defined.}/temp_request_${TARGET_KEYWORD}"
 	done
 
 	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
@@ -643,7 +643,7 @@ fi
 # Options.
 LONGOPTS=''
 LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
-LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,requests-directory:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,requests-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCdfhkKmiOuVwW'
 OPTIONS+='b:D:e:M:o:p:P:r:R:s:S:v:x:'
@@ -739,8 +739,8 @@ while true; do
 			SEARCH_RESULTS="${2}"
 			shift 2
 			;;
-		-D|--requests-directory )
-			REQUESTS_DIRECTORY="${2}"
+		-D|--requests-path )
+			REQUESTS_PATH="${2}"
 			shift 2
 			;;
 		-R|--remove-opts )
@@ -900,8 +900,8 @@ if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
 fi
 
 # Directories.
-if [[ ! -d "${REQUESTS_DIRECTORY}" ]]; then
-	mkdir -p "${REQUESTS_DIRECTORY?Requests directory not defined.}"
+if [[ ! -d "${REQUESTS_PATH}" ]]; then
+	mkdir -p "${REQUESTS_PATH?Requests directory not defined.}"
 fi
 if [[ ! -d "${SOURCE_PATH}" ]]; then
 	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
