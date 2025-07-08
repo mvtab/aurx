@@ -47,7 +47,7 @@ NO_MARK_UPDATE=${AURX_NO_MARK_UPDATE:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
 ORDER_BY=${AURX_ORDER_BY:-descending}
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
-PARALLEL=${AURX_PARALLEL:-10}
+PARALLEL=${AURX_PARALLEL:-50}
 PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
 REQUESTS_DIRECTORY=${AURX_REQUESTS_DIRECTORY:-/tmp/aurx_requests}
 SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
@@ -183,7 +183,7 @@ print_error() {
 			echo "[!] Could not remove \"${SELECTED_PACKAGE}\" from the package_list."
 			;;
 		30 )
-			echo "[!] Could not find ${PACKAGES_NOT_FOUND[@]}."
+			echo "[!] Could not find ${PACKAGES_NOT_FOUND[*]}."
 			;;
 		50 | 51 )
 			echo "[-] getopt not working properly."
@@ -471,7 +471,6 @@ write_package_list() {
 aur_rpc_search() {
 	local TARGET_KEYWORDS="${*}"
 	local RESULTS
-	declare -a SPLIT_RESULTS
 	declare -a PACKAGES_NOT_FOUND
 	declare -a REQUESTS
 
