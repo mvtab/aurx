@@ -136,9 +136,6 @@ If the results include not installed packages or search errors, it means an inst
 You can find an example Containerfile in the root of the repository.  
 You will need to set an user password as soon as you're in a runtime environment.
 
-### Bulk search
-When doing very big queries, the output of the aggregated request will be incomplete, which in turn will lead to jq errors. In such cases, search for the packages 1 by 1. 
-
 ## Changelog
 
 ### 2024.09.16 Breaking changes - Default source directory changed.
