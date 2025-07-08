@@ -915,33 +915,37 @@ if [[ ! -f "${PERSISTENT_PATH}"/package_list ]]; then
 	touch "${PERSISTENT_PATH:?Persistent path not defined.}"/package_list
 fi
 
-# Update operation transformation.
-if [[ ${CURRENT_OPERATION} == update ]]; then
-	SOURCE_PATH='/tmp'
-	VERIFY_VERSIONS=true
-	if ! ${KEEP_SOURCES}; then
-		CLEANUP=true
-	fi
-	if ! ${KEEP_FAILED_SOURCES}; then
-		CLEAN_OPERATION=true
-	fi
-	if ! ${BLOCK_OVERWRITE}; then
-		OVERWRITE_EXISTING=true
-	fi
-	CURRENT_OPERATION="install"
-fi
-
-# List operation transformation.
-if [[ ${CURRENT_OPERATION} == list ]]; then
-	ALL=true
-	SEARCH_RESULTS=1
-	CURRENT_OPERATION="search"
-fi
+# Operation transformations.
+case "${CURRENT_OPERATION}" in
+	update )
+		SOURCE_PATH='/tmp'
+		VERIFY_VERSIONS=true
+		if ! ${KEEP_SOURCES}; then
+			CLEANUP=true
+		fi
+		if ! ${KEEP_FAILED_SOURCES}; then
+			CLEAN_OPERATION=true
+		fi
+		if ! ${BLOCK_OVERWRITE}; then
+			OVERWRITE_EXISTING=true
+		fi
+		CURRENT_OPERATION="install"
+		;;
+	list )
+		ALL=true
+		SEARCH_RESULTS=1
+		CURRENT_OPERATION="search"
+		;;
+	* )
+		;;
+esac
 
 # Add all packages if 'ALL' option active.
 if ${ALL}; then
 	while IFS= read -r TARGET_PACKAGE; do
-		TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
+		if [[ -n "${TARGET_PACKAGE}" ]]; then
+			TARGET_PACKAGES+=( "${TARGET_PACKAGE}" )
+		fi
 	done < "${PERSISTENT_PATH}"/package_list
 fi
 
