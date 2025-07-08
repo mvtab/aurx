@@ -538,7 +538,7 @@ aur_rpc_search() {
 		echo "${RESULT}" \
 			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.StatusString) \n\t\(.Description)\""
 		
-		rm -rf "${REQUESTS_PATH?Requests directory not defined.}/temp_request_${TARGET_KEYWORD}"
+		rm -rf "${REQUESTS_PATH?Requests path not defined.}/temp_request_${TARGET_KEYWORD}"
 	done
 
 	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
@@ -901,7 +901,7 @@ fi
 
 # Directories.
 if [[ ! -d "${REQUESTS_PATH}" ]]; then
-	mkdir -p "${REQUESTS_PATH?Requests directory not defined.}"
+	mkdir -p "${REQUESTS_PATH?Requests path not defined.}"
 fi
 if [[ ! -d "${SOURCE_PATH}" ]]; then
 	mkdir -p "${SOURCE_PATH:?Source path not defined.}"
