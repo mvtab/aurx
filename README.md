@@ -127,10 +127,8 @@ It only prompts for sudo when removing packages with `pacman` and `makepkg` does
 Package completions are using the AUR HTTP RPC API, which has a daily rate limit of 4000 requests per IP per day.  
 
 ### Search installed mark
-Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.  
-
-### List
-If the results include not installed packages or search errors, it means an installed package is not on AUR anymore or it got removed from the system. If it's installed on the system then it's missing from AUR. 
+Packages may be falsely marked as installed in search operations, if coincidentally an installed package is called exactly like one found online.   
+When using the `list` operation, which is also `search` under the hood, appearence of not installed packages means a package is in `aurx`'s package_list but not installed on the system. Search errors from `list` mean a package is in `aurx`'s package_list (installed on system or not) and not on AUR.
 
 ### Containers
 You can find an example Containerfile in the root of the repository.  
