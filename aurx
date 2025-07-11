@@ -489,6 +489,7 @@ aur_rpc_search() {
 		RESULT=$(< "${REQUESTS_PATH}/temp_request_${TARGET_KEYWORD}")
 		if [[ $(echo "${RESULT}" | jq -c ".results") == "[]" ]]; then
 			PACKAGES_NOT_FOUND+=("${TARGET_KEYWORD}")
+			continue
 		fi
 
 		RESULT=$(echo "${RESULT}" | jq -c ".results")
