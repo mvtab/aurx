@@ -261,6 +261,9 @@ print_error() {
 		73 )
 			echo "[-] Could not touch required file \"${REQUIRED_FILE}\"."
 			;;
+		74 )
+			echo "[-] Could not establish a connection to the AUR HTTP."
+			;;
 		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
 			;;
@@ -982,6 +985,12 @@ fi
 if [[ -z "${TARGET_PACKAGES}" ]]; then
 	print_error 56
 	exit 56
+fi
+
+# Check for internet connection.
+if ! curl --connect-timeout 60 "https://aur.archlinux.org/rpc/v5/info"; then
+	print_error 74
+	exit 74
 fi
 
 # Execution.
