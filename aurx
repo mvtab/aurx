@@ -101,7 +101,7 @@ usage() {
 		  -f, --force                           forces the operation, where appliable.
 		  -h, --help                            display this information and exit.
 		  -p, --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
-		  -t, --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp")
+		  -t, --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp/aurx")
 		  -v, --verbosity [LEVEL]               level of verbosity. (2)
 		                                        0 - none, 1 - stderr, 2 - all.
 		
