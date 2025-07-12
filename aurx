@@ -945,7 +945,7 @@ done
 # Operation transformations.
 case "${CURRENT_OPERATION}" in
 	update )
-		SOURCE_PATH="${TMP_DIR}"
+		SOURCE_PATH="${TMP_PATH?TMP_PATH not defined.}"
 		VERIFY_VERSIONS=true
 		if ! ${KEEP_SOURCES}; then
 			CLEANUP=true
