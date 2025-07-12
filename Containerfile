@@ -16,7 +16,7 @@ RUN git clone https://github.com/mvtab/aurx \
 
 WORKDIR /home/archlinux
 USER archlinux
-ENV AURX_REQUESTS_PATH="/home/archlinux/.aurx_requests"
-RUN git config --global init.defaultBranch main
-CMD ["aurx","--help"]
 
+ENV AURX_TMP_PATH="/home/archlinux/tmp"
+
+CMD ["aurx","--help"]

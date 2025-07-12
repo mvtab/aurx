@@ -18,11 +18,11 @@
 
 # Metadata.
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion" "list")
-GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-s" "--source-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-w" "--wipe-existing" "-W" "--overwrite-existing" "-M" "--makepkg-opts" "-V" "--verify-versions")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-t" "--tmp-path" "-v" "--verbosity")
+INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-M" "--makepkg-opts" "-V" "-W" "--overwrite-existing" "-w" "-s" "--source-path" "--verify-versions" "--wipe-existing")
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel" "-D" "--requests-path")
+SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
@@ -36,9 +36,9 @@ ALL=${AURX_ALL:-false}
 BLOCK_OVERWRITE=${AURX_BLOCK_OVERWRITE:-false}
 CLEANUP=${AURX_CLEANUP:-false}
 CLEAN_OPERATION=${AURX_CLEAN_OPERATION:-false}
-COMPARISON_CRITERIA=${AURX_COMPARISON_CRITERIA:-rpc}
+COMPARISON_CRITERIA="${AURX_COMPARISON_CRITERIA:-rpc}"
 DOWNLOAD_ONLY=${AURX_DOWNLOAD_ONLY:-false}
-EXECUTABLE_NAME=${AURX_EXECUTABLE_NAME:-aurx}
+EXECUTABLE_NAME="${AURX_EXECUTABLE_NAME:-aurx}"
 FORCE=${AURX_FORCE:-false}
 KEEP_SOURCES=${AURX_KEEP_SOURCES:-false}
 KEEP_FAILED_SOURCES=${AURX_KEEP_FAILED_SOURCES:-false}
@@ -46,18 +46,20 @@ MAINTAINED=${AURX_MAINTAINED:-false}
 NO_MARK_INSTALLED=${AURX_NO_MARK_INSTALLED:-false}
 NO_MARK_UPDATE=${AURX_NO_MARK_UPDATE:-false}
 NO_OUT_OF_DATE=${AURX_NO_OUT_OF_DATE:-false}
-ORDER_BY=${AURX_ORDER_BY:-descending}
+ORDER_BY="${AURX_ORDER_BY:-descending}"
 OVERWRITE_EXISTING=${AURX_OVERWRITE_EXISTING:-false}
 PARALLEL=${AURX_PARALLEL:-50}
-PERSISTENT_PATH=${AURX_PERSISTENT_PATH:-${HOME}/.aurx/cfg}
-REQUESTS_PATH=${AURX_REQUESTS_PATH:-/tmp/aurx_requests}
-SEARCH_CRITERIA=${AURX_SEARCH_CRITERIA:-name}
+SEARCH_CRITERIA="${AURX_SEARCH_CRITERIA:-name}"
 SEARCH_RESULTS=${AURX_SEARCH_RESULTS:-20}
-SORT_BY=${AURX_SORT_BY:-popularity}
-SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME}/.aurx/src}"
+SORT_BY="${AURX_SORT_BY:-popularity}"
+TMP_PATH="${AURX_TMP_PATH:-/tmp}"
 VERBOSITY=${AURX_VERBOSITY:-2}
 VERIFY_VERSIONS=${AURX_VERIFY_VERSIONS:-false}
 WIPE_EXISTING=${AURX_WIPE_EXISTING:-false}
+
+# Stacked variables.
+PERSISTENT_PATH="${AURX_PERSISTENT_PATH:-${HOME?HOME not defined.}/.aurx/cfg}"
+SOURCE_PATH="${AURX_SOURCE_PATH:-${HOME?HOME not defined.}/.aurx/src}"
 
 # Arrays.
 declare -a MAKEPKG_OPTS
@@ -98,9 +100,10 @@ usage() {
 		  -a, --all                             add all installed packages to the operation.
 		  -f, --force                           forces the operation, where appliable.
 		  -h, --help                            display this information and exit.
-		  -p, --persistent-path                 path for persistent data. ("\${HOME}/.aurx/cfg")
-		  -s, --source-path                     work directory for builds.("\${HOME}/.aurx/src")
-		  -v, --verbosity                       level of verbosity. (2)
+		  -p, --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
+		  -s, --source-path [PATH]              work directory for builds.("\${HOME}/.aurx/src")
+		  -t, --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp")
+		  -v, --verbosity [LEVEL]               level of verbosity. (2)
 		                                        0 - none, 1 - stderr, 2 - all.
 		
 		  install:
@@ -123,7 +126,6 @@ usage() {
 		  -u, --no-mark-update                  do not check for updates while searching.
 		  -O, --no-out-of-date                  filter out all out of date packages.
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
-		  -D, --requests-path [DIR]             work directory for requests responses. ("/tmp/aurx_requests")
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
 		                                        "name", "name-desc", "depends", "checkdepends",
@@ -188,7 +190,7 @@ print_error() {
 			TEMP_PACKAGES="${PACKAGES_NOT_FOUND[*]}"
 			echo "[!] Could not find ${TEMP_PACKAGES//\ /,\ }."
 			;;
-		50 | 51 )
+		50|51 )
 			echo "[-] getopt not working properly."
 			;;
 		52 )
@@ -232,26 +234,32 @@ print_error() {
 		64 )
 			echo "[-] popd failed at \"${PWD}\"."
 			;;
-		65)
+		65 )
 			echo "[-] Unknown sort-by value: \"${SORT_BY}\"."
 			echo "[i] Possible options are: firstsubmitted, lastmodified, votes, popularity."
 			;;
-		66)
+		66 )
 			echo "[-] Unknown order-by value: \"${ORDER_BY}\"."
 			echo "[i] Possible options are: ascending, descending."
 			;;
-		67)
+		67 )
 			echo "[-] Could not pull repository: \"${SELECTED_PACKAGE}\"."
 			;;
-		68)
+		68 )
 			echo "[-] Unknown comparison criteria: \"${COMPARISON_CRITERIA}\"."
 			echo "[i] Possible options are: pkgbuild, rpc."
 			;;
-		70)
+		70 )
 			echo "[-] Could not find PKGBUILD for \"${SELECTED_PACKAGE}\" with comparison criteria \"pkgbuild\"."
 			;;
-		71)
+		71 )
 			echo "[-] Internal error during execution phase."
+			;;
+		72 )
+			echo "[-] Could not create required directory \"${REQUIRED_DIRECTORY}\"."
+			;;
+		73 )
+			echo "[-] Could not touch required file \"${REQUIRED_FILE}\"."
 			;;
 		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
@@ -305,7 +313,8 @@ aurx_completion() {
 				                COMPREPLY=( \$(compgen -W "\${ORDER_BY_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--sort-by" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SORT_BY_VALUES}" -- "\${CURRENT_WORD}") )
-				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]]; then
+				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]] \
+				                || [[ \${LAST_WORD} == "--tmp-path" ]]; then
 						COMPREPLY=( \$(compgen -d -- "\${CURRENT_WORD}") )
 				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
@@ -479,14 +488,14 @@ aur_rpc_search() {
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
 		REQUESTS+=("https://aur.archlinux.org/rpc/v5/search/${TARGET_KEYWORD}?by=${SEARCH_CRITERIA}")
-		REQUESTS+=("-o${REQUESTS_PATH?REQUESTS_PATH not defined.}/temp_request_${TARGET_KEYWORD}")
+		REQUESTS+=("-o${TMP_PATH?TMP_PATH not defined.}/temp_request_${TARGET_KEYWORD}")
 	done
 
 	curl --parallel --parallel-immediate --parallel-max "${PARALLEL}" \
 		"${REQUESTS[@]}" 2> /dev/null
 
 	for TARGET_KEYWORD in ${TARGET_KEYWORDS}; do
-		RESULT=$(< "${REQUESTS_PATH}/temp_request_${TARGET_KEYWORD}")
+		RESULT=$(< "${TMP_PATH}/temp_request_${TARGET_KEYWORD}")
 		if [[ $(echo "${RESULT}" | jq -c ".results") == "[]" ]]; then
 			PACKAGES_NOT_FOUND+=("${TARGET_KEYWORD}")
 			continue
@@ -542,7 +551,7 @@ aur_rpc_search() {
 		echo "${RESULT}" \
 			| jq -r ".[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity\(.StatusString) \n\t\(.Description)\""
 		
-		rm -rf "${REQUESTS_PATH?REQUESTS_PATH not defined.}/temp_request_${TARGET_KEYWORD}"
+		rm -rf "${TMP_PATH?TMP_PATH not defined.}/temp_request_${TARGET_KEYWORD}"
 	done
 
 	if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
@@ -621,9 +630,9 @@ search_aur_packages() {
 	local TARGET_KEYWORDS="${*}"
 
 	case "${SEARCH_CRITERIA}" in
-		name | name-desc | depends | checkdepends | optdepends \
-			| makedepends | maintainer | submitter | provides \
-			| conflicts | replaces | keywords | groups | comaintainers )
+		name|name-desc|depends|checkdepends|optdepends \
+			|makedepends|maintainer|submitter|provides \
+			|conflicts|replaces|keywords|groups|comaintainers )
 			aur_rpc_search "${TARGET_KEYWORDS}"
 			;;
 		suggest )
@@ -647,10 +656,10 @@ fi
 # Options.
 LONGOPTS=''
 LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
-LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,requests-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,verbosity:'
+LONGOPTS+=',comparison-criteria:,executable-name:,makepkg-opts:,order-by:,parallel:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,tmp-path:,verbosity:'
 OPTIONS=''
 OPTIONS+='aBcCdfhkKmiOuVwW'
-OPTIONS+='b:D:e:M:o:p:P:r:R:s:S:v:x:'
+OPTIONS+='b:e:M:o:p:P:r:R:s:S:t:v:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
@@ -731,6 +740,14 @@ while true; do
 			NO_OUT_OF_DATE=true
 			shift
 			;;
+		-o|--order-by )
+			ORDER_BY="${2}"
+			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
+				print_error 66
+				exit 66
+			fi
+			shift 2
+			;;
 		-p|--persistent-path )
 			PERSISTENT_PATH="${2}"
 			shift 2
@@ -741,10 +758,6 @@ while true; do
 			;;
 		-r|--search-results )
 			SEARCH_RESULTS="${2}"
-			shift 2
-			;;
-		-D|--requests-path )
-			REQUESTS_PATH="${2}"
 			shift 2
 			;;
 		-R|--remove-opts )
@@ -766,12 +779,8 @@ while true; do
 			fi
 			shift 2
 			;;
-		-o|--order-by )
-			ORDER_BY="${2}"
-			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
-				print_error 66
-				exit 66
-			fi
+		-t|--tmp-path )
+			TMP_PATH="${2}"
 			shift 2
 			;;
 		-v|--verbosity )
@@ -810,9 +819,9 @@ while true; do
 done
 
 # Composed metadata.
-REQUIRED_DIRECTORIES=("${SOURCE_PATH?SOURCE_PATH not defined.}" \
-	"${PERSISTENT_PATH?PERSISTENT_PATH not defined.}" \
-	"${REQUESTS_PATH?REQUESTS_PATH not defined.}")
+REQUIRED_DIRECTORIES=("${TMP_PATH?TMP_PATH not defined.}" \
+	"${SOURCE_PATH?SOURCE_PATH not defined.}" \
+	"${PERSISTENT_PATH?PERSISTENT_PATH not defined.}")
 REQUIRED_FILES=("${PERSISTENT_PATH?PERSISTENT_PATH not defined.}/package_list")
 
 
@@ -916,21 +925,27 @@ fi
 # Required directories.
 for REQUIRED_DIRECTORY in "${REQUIRED_DIRECTORIES[@]}"; do
 	if [[ ! -d "${REQUIRED_DIRECTORY}" ]]; then
-		mkdir -p "${REQUIRED_DIRECTORY}"
+		if ! mkdir -p "${REQUIRED_DIRECTORY}"; then
+			print_error 72
+			exit 72
+		fi
 	fi
 done
 
 # Required files.
 for REQUIRED_FILE in "${REQUIRED_FILES[@]}"; do
 	if [[ ! -f "${REQUIRED_FILE}" ]]; then
-		touch "${REQUIRED_FILE}"
+		if ! touch "${REQUIRED_FILE}"; then
+			print_error 73
+			exit 73
+		fi
 	fi
 done
 
 # Operation transformations.
 case "${CURRENT_OPERATION}" in
 	update )
-		SOURCE_PATH='/tmp'
+		SOURCE_PATH="${TMP_DIR}"
 		VERIFY_VERSIONS=true
 		if ! ${KEEP_SOURCES}; then
 			CLEANUP=true
@@ -969,14 +984,14 @@ fi
 
 # Execution.
 case "${CURRENT_OPERATION}" in
-	install | remove )
+	install|remove )
 		for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
 			"${CURRENT_OPERATION}"_aur_package "${SELECTED_PACKAGE}" 1> "${STDOUT_DESTINATION}" 2> "${STDERR_DESTINATION}"
 			ERROR_CODE=${?}
 			case ${ERROR_CODE} in
 				0 )
 					;;
-				10 | 11 | 12 | 13 | 14 | 20 | 21 )
+				10|11|12|13|14|20|21 )
 					print_error "${ERROR_CODE}"
 					;;
 				* )
