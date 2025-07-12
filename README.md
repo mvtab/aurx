@@ -134,6 +134,10 @@ When using the `list` operation, which is also `search` under the hood, appearen
 You can find an example Containerfile in the root of the repository.  
 You will need to set an user password as soon as you're in a runtime environment.  
 
+### Subdependencies
+`makepkg` requires some packages for most sources available on AUR.  
+If you encounter problems while building, try to install `binutils`, `debugedit`, `fakeroot` and `gcc`.
+
 ## Changelog
 
 ### 2024.09.16 Breaking changes - Default source directory changed.
