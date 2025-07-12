@@ -988,7 +988,7 @@ if [[ -z "${TARGET_PACKAGES}" ]]; then
 fi
 
 # Check for internet connection.
-if ! curl --connect-timeout 60 "https://aur.archlinux.org/rpc/v5/info" 2> /dev/null 1>&2; then
+if ! curl --connect-timeout 10 "https://aur.archlinux.org/rpc/v5/info" 2> /dev/null 1>&2; then
 	print_error 74
 fi
 
