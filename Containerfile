@@ -8,14 +8,16 @@ RUN useradd -m archlinux \
 	&& echo "archlinux ALL=(ALL) ALL" \
 	| tee /etc/sudoers.d/archlinux
 
-RUN git clone https://github.com/mvtab/aurx \
-	&& cp ./aurx/aurx /usr/bin/aurx \
-	&& aurx completion bash \
-	| tee /usr/share/bash-completion/completions/aurx \
-	&& rm -rf ./aurx
-
 WORKDIR /home/archlinux
 USER archlinux
+
+RUN git clone https://github.com/mvtab/aurx \
+	&& pushd aurx \
+	&& makepkg --noconfirm -sirc \
+	&& popd \
+	&& rm -rf ./aurx \
+	&& echo 'source <(aurx completion bash)' \
+		| tee -a /home/archlinux/.bashrc
 
 ENV AURX_TMP_PATH="/home/archlinux/tmp"
 
