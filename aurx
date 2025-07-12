@@ -569,7 +569,7 @@ aur_rpc_suggest() {
 		REQUESTS+=( "https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" )
 	done
 
-	RESULTS=$(curl --connect-timeout 60 --max-time 180 --parallel --parallel-immediate \
+	RESULTS=$(curl --connect-timeout 5 --max-time 15 --parallel --parallel-immediate \
 		--parallel-max "${PARALLEL}" "${REQUESTS[@]}" 2> /dev/null)
 	RESULTS=$(
 		for RESULT in ${RESULTS}; do
