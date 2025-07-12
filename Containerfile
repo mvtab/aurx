@@ -17,5 +17,7 @@ RUN git clone https://github.com/mvtab/aurx \
 WORKDIR /home/archlinux
 USER archlinux
 
+ENV AURX_REQUESTS_PATH="/home/archlinux/.aurx_requests"
+
 CMD ["aurx","--help"]
 
