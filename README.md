@@ -135,8 +135,8 @@ You can find an example Containerfile in the root of the repository.
 You will need to set an user password as soon as you're in a runtime environment.  
 
 ### Subdependencies
-`makepkg` requires some packages for most sources available on AUR.  
-If you encounter problems while building, try to install `binutils`, `debugedit`, `fakeroot` and `gcc`.
+`base-devel` is required to build packages with `makepkg`.  
+You can read more about it [here](https://wiki.archlinux.org/title/Makepkg#Usage).
 
 ## Changelog
 
