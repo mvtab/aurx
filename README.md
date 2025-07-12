@@ -133,10 +133,6 @@ When using the `list` operation, which is also `search` under the hood, appearen
 ### Containers
 You can find an example Containerfile in the root of the repository.  
 You will need to set an user password as soon as you're in a runtime environment.  
-When updating packages in containers make sure to change the source path away from `/tmp`, as this can cause problems. For example:  
-```bash
-AURX_SOURCE_PATH='/home/archlinux/.aurx/temp_dir' aurx update some-package
-```
 
 ## Changelog
 
