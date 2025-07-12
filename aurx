@@ -101,7 +101,6 @@ usage() {
 		  -f, --force                           forces the operation, where appliable.
 		  -h, --help                            display this information and exit.
 		  -p, --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
-		  -s, --source-path [PATH]              work directory for builds.("\${HOME}/.aurx/src")
 		  -t, --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp")
 		  -v, --verbosity [LEVEL]               level of verbosity. (2)
 		                                        0 - none, 1 - stderr, 2 - all.
@@ -109,13 +108,14 @@ usage() {
 		  install:
 		  -c, --cleanup                         delete sources after successful installs.
 		  -C, --clean-operation                 delete sources after unsucessful installs.
-		  -d, --download-only                   download the source from AUR and stop.
-		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
-		  -V, --verify-versions                 compare target versions to installed ones.
-		  -w, --wipe-existing                   wipe eventually existing sources.
-		  -W, --overwrite-existing              overwrite eventually existing sources.
 		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
 		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+		  -d, --download-only                   download the source from AUR and stop.
+		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
+		  -W, --overwrite-existing              overwrite eventually existing sources.
+		  -s, --source-path [PATH]              work directory for builds.("\${HOME}/.aurx/src")
+		  -V, --verify-versions                 compare target versions to installed ones.
+		  -w, --wipe-existing                   wipe eventually existing sources.
 
 		  remove:
 		  -R, --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
@@ -125,6 +125,8 @@ usage() {
 		  -i, --no-mark-installed               don't show the '[installed]' mark.
 		  -u, --no-mark-update                  do not check for updates while searching.
 		  -O, --no-out-of-date                  filter out all out of date packages.
+		  -o, --order-by [ORDER]                how to order search results. ("descending")
+		                                        "ascending", "descending".
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
@@ -135,21 +137,19 @@ usage() {
 		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
 		                                        "popularity", "firstsubmitted", "lastmodified",
 		                                        "votes", "popularity".
-		  -o, --order-by [ORDER]                how to order search results. ("descending")
-		                                        "ascending", "descending".
 		
 		  update:
 		  -B, --block-overwrite                 don't overwrite existing sources.
+		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
+		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 		  -k, --keep-sources                    don't cleanup after successful updates.
 		  -K, --keep-failed-sources             don't cleanup after unsuccessful updates.
 		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
-		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
-		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
 
 		  list:
-		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 		  -i, --no-mark-installed               don't show the '[installed]' mark.
 		  -u, --no-mark-update                  do not check for updates while searching.
+		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
 
 		  completion:
 		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
