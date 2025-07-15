@@ -522,7 +522,8 @@ write_package_list() {
 aur_rpc_suggest() {
 	local TARGET_KEYWORD="${1}"
 
-	if ! RESULTS=$(curl --connect-timeout 60 --max-time 180 "https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null); then
+	if ! RESULTS=$(curl --connect-timeout 5 --max-time 10 \
+		"https://aur.archlinux.org/rpc/v5/suggest/${TARGET_KEYWORD}" 2> /dev/null); then
 		print_error 74
 		exit 74
 	fi
