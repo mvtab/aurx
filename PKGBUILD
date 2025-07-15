@@ -1,7 +1,7 @@
 # Maintainer: mvtab <mvtabilitas@protonmail.com>
 pkgname="aurx"
 pkgver="1.0.1"
-pkgrel=1
+pkgrel=2
 pkgdesc="A simple bash script for easily managing AUR installs."
 arch=("x86_64")
 url="https://github.com/mvtab/aurx"
