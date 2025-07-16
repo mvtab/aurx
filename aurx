@@ -682,10 +682,10 @@ aur_rpc_suggest() {
 
 	case "${OUTPUT}" in
 		formatted )
-			echo "${RESULTS}" | jq -cr ".[:${SEARCH_RESULTS}] | .[]"
+			echo "${RESULTS}" | jq -crM ".[:${SEARCH_RESULTS}] | .[]"
 			;;
 		json-lines )
-			echo "${RESULTS}" | jq -cr ".[:${SEARCH_RESULTS}]"
+			echo "${RESULTS}" | jq -crM ".[:${SEARCH_RESULTS}]"
 			;;
 		json )
 			print_error 77
@@ -808,7 +808,7 @@ print_aur_data() {
 			done
 
 			echo "${AUR_DATA}" \
-				| jq -cr ".[] | .results[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \(.LocalStatus) \n\t\(.Description)\""
+				| jq -crM ".[] | .results[] | \"\(.Maintainer)/\(.Name) \(.Version): \(.NumVotes) Votes, \(.Popularity) Popularity \(.LocalStatus) \n\t\(.Description)\""
 
 			if [[ ${#PACKAGES_NOT_FOUND[@]} -gt 0 ]]; then
 				print_error 76
