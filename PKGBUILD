@@ -1,14 +1,14 @@
 # Maintainer: mvtab <mvtabilitas@protonmail.com>
 pkgname="aurx"
-pkgver="1.0.2"
-pkgrel=2
+pkgver="1.0.3"
+pkgrel=1
 pkgdesc="A simple bash script for easily managing AUR installs."
 arch=("x86_64")
 url="https://github.com/mvtab/aurx"
 license=("GPL-3.0-only")
 depends=("curl>=7.68.0" "git" "jq")
 source=("aurx")
-sha256sums=("0cbb4d3e3022079d3c26afda8f355d5d737838e1ab71ecf2c9597ceadf12530d")
+sha256sums=("8f48a3f216c8e9158e7f387b16db9158bfe6de24ca72d600fe7cd912ff4fa685")
 
 package() {
 	install -Dm755 "${srcdir}/aurx" "${pkgdir}/usr/bin/aurx"

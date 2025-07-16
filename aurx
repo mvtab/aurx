@@ -386,6 +386,145 @@ aurx_completion() {
 	esac
 }
 
+aurx_sanity_checks() {
+	# current operation.
+	if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
+		print_error 55
+		exit 55
+	fi
+
+	# Root + install/update exception.
+	if [[ ${UID} -eq 0 ]] && [[ " install update " =~ ${CURRENT_OPERATION} ]]; then
+		print_error 57
+		exit 57
+	fi
+
+	# comparison-criteria.
+	if [[ ! "${COMPARISON_CRITERIA_VALUES[*]}" =~ ${COMPARISON_CRITERIA} ]]; then
+		print_error 68
+		exit 68
+	fi
+
+	# sort-by.
+	case "${SORT_BY}" in
+		firstsubmitted )
+			SORT_BY="FirstSubmitted"
+			;;
+		lastmodified )
+			SORT_BY="LastModified"
+			;;
+		votes )
+			SORT_BY="NumVotes"
+			;;
+		popularity )
+			SORT_BY="Popularity"
+			;;
+		* )
+			print_error 65
+			exit 65
+			;;
+	esac
+
+	# order-by.
+	if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
+		print_error 66
+		exit 66
+	fi
+
+	# output-format.
+	case "${CURRENT_OPERATION}" in
+		search )
+			if [[ ! "${OUTPUT_VALUES[*]}" =~ ${OUTPUT} ]]; then
+				print_error 75
+				exit 75
+			fi
+			;;
+		suggest )
+			if [[ ! "${OUTPUT_SUGGEST_VALUES[*]}" =~ ${OUTPUT} ]]; then
+				print_error 77
+				exit 77
+			fi
+			;;
+		* )
+			;;
+	esac
+
+	# search-criteria
+	if [[ ! "${SEARCH_CRITERIA_VALUES[*]}" =~ ${SEARCH_CRITERIA} ]]; then
+		print_error 52
+		exit 52
+	fi
+
+	# verbosity.
+	case "${VERBOSITY}" in
+		0 )
+			STDOUT_DESTINATION=/dev/null
+			STDERR_DESTINATION=/dev/null
+			;;
+		1 )
+			STDOUT_DESTINATION=/dev/null
+			STDERR_DESTINATION=/dev/stderr
+			;;
+		2 )
+			STDOUT_DESTINATION=/dev/stdout
+			STDERR_DESTINATION=/dev/stderr
+			;;
+		* )
+			print_error 58
+			exit 58
+			;;
+	esac
+}
+
+aurx_system_checks() {
+	# Dependencies check.
+	case "${CURRENT_OPERATION}" in
+		install | update )
+			REQUIRED_PACKAGES=('curl' 'echo' 'git' 'grep' 'jq' 'pacman' 'sed' 'tee')
+			;;
+		remove )
+			REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
+			;;
+		search | completion | list | suggest )
+			REQUIRED_PACKAGES=('curl' 'echo' 'jq')
+			;;
+		* )
+			print_error 55
+			exit 55
+			;;
+	esac
+	ABSENT_PACKAGES=()
+	for REQUIRED_PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
+		if [[ ! $(command -v "${REQUIRED_PACKAGE}") ]]; then
+			ABSENT_PACKAGES+=( "${REQUIRED_PACKAGE}" )
+		fi
+	done
+	if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
+		print_error 59
+		exit 59
+	fi
+
+	# Required directories.
+	for REQUIRED_DIRECTORY in "${REQUIRED_DIRECTORIES[@]}"; do
+		if [[ ! -d "${REQUIRED_DIRECTORY}" ]]; then
+			if ! mkdir -p "${REQUIRED_DIRECTORY}"; then
+				print_error 72
+				exit 72
+			fi
+		fi
+	done
+
+	# Required files.
+	for REQUIRED_FILE in "${REQUIRED_FILES[@]}"; do
+		if [[ ! -f "${REQUIRED_FILE}" ]]; then
+			if ! touch "${REQUIRED_FILE}"; then
+				print_error 73
+				exit 73
+			fi
+		fi
+	done
+}
+
 compare_versions() {
 	local TARGET_PACKAGE="${1}"
 
@@ -776,10 +915,6 @@ while true; do
 			;;
 		-b|--sort-by )
 			SORT_BY="${2}"
-			if [[ ! "${SORT_BY_VALUES[*]}" =~ ${SORT_BY} ]]; then
-				print_error 65
-				exit 65
-			fi
 			shift 2
 			;;
 		-B|--block-overwrite )
@@ -847,10 +982,6 @@ while true; do
 			;;
 		-o|--order-by )
 			ORDER_BY="${2}"
-			if [[ ! "${ORDER_BY_VALUES[*]}" =~ ${ORDER_BY} ]]; then
-				print_error 66
-				exit 66
-			fi
 			shift 2
 			;;
 		-p|--persistent-path )
@@ -878,10 +1009,6 @@ while true; do
 			;;
 		-S|--search-criteria )
 			SEARCH_CRITERIA="${2}"
-			if [[ ! "${SEARCH_CRITERIA_VALUES[*]}" =~ ${SEARCH_CRITERIA} ]]; then
-				print_error 52
-				exit 52
-			fi
 			shift 2
 			;;
 		-t|--tmp-path )
@@ -906,10 +1033,6 @@ while true; do
 			;;
 		-x|--comparison-criteria )
 			COMPARISON_CRITERIA="${2}"
-			if [[ ! "${COMPARISON_CRITERIA_VALUES[*]}" =~ ${COMPARISON_CRITERIA} ]]; then
-				print_error 68
-				exit 68
-			fi
 			shift 2
 			;;
 		-- )
@@ -929,19 +1052,12 @@ REQUIRED_DIRECTORIES=("${TMP_PATH?TMP_PATH not defined.}" \
 	"${PERSISTENT_PATH?PERSISTENT_PATH not defined.}")
 REQUIRED_FILES=("${PERSISTENT_PATH?PERSISTENT_PATH not defined.}/package_list")
 
-
-# Input sanity checks.
-#
-# Current operation.
+# Current operation parse.
 if [[ ${#} -eq 0 ]]; then
 	print_error 54
 	exit 54
 fi
 CURRENT_OPERATION="${1}"
-if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
-	print_error 55
-	exit 55
-fi
 shift
 
 # Take all packages.
@@ -954,116 +1070,9 @@ if ! [[ -t 0 ]]; then
 	done
 fi
 
-# Root + install/update exception.
-if [[ ${UID} -eq 0 ]] && [[ " install update " =~ ${CURRENT_OPERATION} ]]; then
-	print_error 57
-	exit 57
-fi
-
-# Verbosity.
-case "${VERBOSITY}" in
-	0 ) 
-		STDOUT_DESTINATION=/dev/null
-		STDERR_DESTINATION=/dev/null
-		;;
-	1 )
-		STDOUT_DESTINATION=/dev/null
-		STDERR_DESTINATION=/dev/stderr
-		;;
-	2 )
-		STDOUT_DESTINATION=/dev/stdout
-		STDERR_DESTINATION=/dev/stderr
-		;;
-	* )
-		print_error 58
-		exit 58
-		;;
-esac
-
-# Sort by.
-case "${SORT_BY}" in
-	firstsubmitted )
-		SORT_BY="FirstSubmitted"
-		;;
-	lastmodified )
-		SORT_BY="LastModified"
-		;;
-	votes )
-		SORT_BY="NumVotes"
-		;;
-	popularity )
-		SORT_BY="Popularity"
-		;;
-	* )
-		print_error 65
-		exit 65
-		;;
-esac
-
-# Output format.
-case "${CURRENT_OPERATION}" in
-	search )
-		if [[ ! "${OUTPUT_VALUES[*]}" =~ ${OUTPUT} ]]; then
-			print_error 75
-			exit 75
-		fi
-		;;
-	suggest )
-		if [[ ! "${OUTPUT_SUGGEST_VALUES[*]}" =~ ${OUTPUT} ]]; then
-			print_error 77
-			exit 77
-		fi
-		;;
-	* )
-		;;
-esac
-
-# Dependencies check.
-case "${CURRENT_OPERATION}" in
-	install | update )
-		REQUIRED_PACKAGES=('curl' 'echo' 'git' 'grep' 'jq' 'pacman' 'sed' 'tee')
-		;;
-	remove )
-		REQUIRED_PACKAGES=('grep' 'pacman' 'sed')
-		;;
-	search | completion | list | suggest )
-		REQUIRED_PACKAGES=('curl' 'echo' 'jq')
-		;;
-	* )
-		print_error 55
-		exit 55
-		;;
-esac		
-ABSENT_PACKAGES=()
-for REQUIRED_PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
-	if [[ ! $(command -v "${REQUIRED_PACKAGE}") ]]; then
-		ABSENT_PACKAGES+=( "${REQUIRED_PACKAGE}" )
-	fi
-done
-if [[ -n "${ABSENT_PACKAGES[*]}" ]]; then
-	print_error 59
-	exit 59
-fi
-
-# Required directories.
-for REQUIRED_DIRECTORY in "${REQUIRED_DIRECTORIES[@]}"; do
-	if [[ ! -d "${REQUIRED_DIRECTORY}" ]]; then
-		if ! mkdir -p "${REQUIRED_DIRECTORY}"; then
-			print_error 72
-			exit 72
-		fi
-	fi
-done
-
-# Required files.
-for REQUIRED_FILE in "${REQUIRED_FILES[@]}"; do
-	if [[ ! -f "${REQUIRED_FILE}" ]]; then
-		if ! touch "${REQUIRED_FILE}"; then
-			print_error 73
-			exit 73
-		fi
-	fi
-done
+# Sanity & system checks.
+aurx_sanity_checks
+aurx_system_checks
 
 # Operation transformations.
 case "${CURRENT_OPERATION}" in
