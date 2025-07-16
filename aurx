@@ -23,12 +23,13 @@ INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only
 REMOVE_OPTIONS=("-R" "--remove-opts")
 UPDATE_OPTIONS=("-k" "--keep-sources" "-K" "--keep-failed-sources" "-B" "--block-overwrite" "-x" "--comparison-criteria" "-M" "--makepkg-opts")
 SEARCH_OPTIONS=("-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-z" "--output" "-O" "--no-out-of-date" "-m" "--maintained" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel")
-SUGGEST_OPTIONS=("-r" "--search-results" "-o" "--order-by")
+SUGGEST_OPTIONS=("-r" "--search-results" "-o" "--order-by" "-z" "--output")
 COMPLETION_OPTIONS=("-e" "--executable-name")
 LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
 COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
-OUTPUT_VALUES=("formatted" "json")
+OUTPUT_VALUES=("formatted" "json" "json-lines")
+OUTPUT_SUGGEST_VALUES=("formatted" "json-lines")
 ORDER_BY_VALUES=("ascending" "descending")
 SEARCH_CRITERIA_VALUES=("name" "name-desc" "depends" "checkdepends" "optdepends" "makedepends" "maintainer" "submitter" "provides" "conflicts" "replaces" "keywords" "groups" "comaintainers")
 SORT_BY_VALUES=("firstsubmitted" "lastmodified" "votes" "popularity")
@@ -132,7 +133,7 @@ usage() {
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
 		                                        "ascending", "descending".
 		  -z, --output [TYPE]                   how to output search results. ("formatted")
-		                                        "formatted", "json".
+		                                        "formatted", "json", "json-lines".
 		  -P, --parallel [COUNT]                how many requests to do simultaneously. (50)
 		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
 		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
@@ -148,6 +149,8 @@ usage() {
 		  -o, --order-by [ORDER]                how to order search results. ("descending")
 		                                        "ascending", "descending".
 		  -r, --search-results [COUNT]          number of results to suggest, max 20. (20)
+		  -z, --output [TYPE]                   how to output suggest results. ("formatted")
+		                                        "formatted", "json-lines".
 		
 		  update:
 		  -B, --block-overwrite                 don't overwrite existing sources.
@@ -284,12 +287,16 @@ print_error() {
 			;;
 		75 )
 			echo "[-] Unknown output: \"${OUTPUT}\"."
-			echo "[i] Possible options are: formatted, json."
+			echo "[i] Possible options are: formatted, json-lines, json."
 			;;
 		76 )
 			local TEMP_PACKAGES
 			TEMP_PACKAGES="${PACKAGES_NOT_FOUND[*]}"
 			echo "[!] Could not find ${TEMP_PACKAGES//\ /,\ }."
+			;;
+		77 )
+			echo "[!] The suggest operation can not output json."
+			echo "[i] Possible options are: formatted, json-lines."
 			;;
 		* )
 			echo "[-] No error message found for error ${GIVEN_ERROR}."
@@ -318,6 +325,7 @@ aurx_completion() {
 				        local AVAILABLE_COMPLETIONS="${AVAILABLE_COMPLETIONS[*]}"
 				        local COMPARISON_CRITERIA_VALUES="${COMPARISON_CRITERIA_VALUES[*]}"
 				        local OUTPUT_VALUES="${OUTPUT_VALUES[*]}"
+				        local OUTPUT_SUGGEST_VALUES="${OUTPUT_SUGGEST_VALUES[*]}"
 				        local ORDER_BY_VALUES="${ORDER_BY_VALUES[*]}"
 				        local SEARCH_CRITERIA_VALUES="${SEARCH_CRITERIA_VALUES[*]}"
 				        local SORT_BY_VALUES="${SORT_BY_VALUES[*]}"
@@ -343,15 +351,16 @@ aurx_completion() {
 				                COMPREPLY=( \$(compgen -W "\${SEARCH_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--comparison-criteria" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${COMPARISON_CRITERIA_VALUES}" -- "\${CURRENT_WORD}") )
-				        elif [[ \${LAST_WORD} == "--output" ]]; then
+				        elif [[ \${LAST_WORD} == "--output" ]] && [[ \${COMP_WORDS[*]} =~ " search " ]]; then
 				                COMPREPLY=( \$(compgen -W "\${OUTPUT_VALUES}" -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--output" ]] && [[ \${COMP_WORDS[*]} =~ " suggest " ]]; then
+				                COMPREPLY=( \$(compgen -W "\${OUTPUT_SUGGEST_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--order-by" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${ORDER_BY_VALUES}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${LAST_WORD} == "--sort-by" ]]; then
 				                COMPREPLY=( \$(compgen -W "\${SORT_BY_VALUES}" -- "\${CURRENT_WORD}") )
-				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]] \
-				                || [[ \${LAST_WORD} == "--tmp-path" ]]; then
-						COMPREPLY=( \$(compgen -d -- "\${CURRENT_WORD}") )
+				        elif [[ \${LAST_WORD} == "--source-path" ]] || [[ \${LAST_WORD} == "--persistent-path" ]] || [[ \${LAST_WORD} == "--tmp-path" ]]; then
+				                COMPREPLY=( \$(compgen -d -- "\${CURRENT_WORD}") )
 				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
 				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
@@ -536,8 +545,12 @@ aur_rpc_suggest() {
 		formatted )
 			echo "${RESULTS}" | jq -cr ".[:${SEARCH_RESULTS}] | .[]"
 			;;
-		json )
+		json-lines )
 			echo "${RESULTS}" | jq -cr ".[:${SEARCH_RESULTS}]"
+			;;
+		json )
+			print_error 77
+			exit 77
 			;;
 		* )
 			print_error 75
@@ -643,6 +656,9 @@ print_aur_data() {
 	case "${OUTPUT}" in
 		json )
 			echo "${AUR_DATA}"
+			;;
+		json-lines )
+			echo "${AUR_DATA}" | jq -crM ".[]"
 			;;
 		formatted )
 			local IFS=$'\n'
@@ -827,10 +843,6 @@ while true; do
 			;;
 		-z|--output )
 			OUTPUT="${2}"
-			if [[ ! "${OUTPUT_VALUES[*]}" =~ ${OUTPUT} ]]; then
-				print_error 75
-				exit 75
-			fi
 			shift 2
 			;;
 		-o|--order-by )
@@ -985,6 +997,24 @@ case "${SORT_BY}" in
 	* )
 		print_error 65
 		exit 65
+		;;
+esac
+
+# Output format.
+case "${CURRENT_OPERATION}" in
+	search )
+		if [[ ! "${OUTPUT_VALUES[*]}" =~ ${OUTPUT} ]]; then
+			print_error 75
+			exit 75
+		fi
+		;;
+	suggest )
+		if [[ ! "${OUTPUT_SUGGEST_VALUES[*]}" =~ ${OUTPUT} ]]; then
+			print_error 77
+			exit 77
+		fi
+		;;
+	* )
 		;;
 esac
 
