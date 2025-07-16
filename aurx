@@ -637,7 +637,7 @@ filter_aur_data() {
 }
 
 print_aur_data() {
-	AUR_DATA="${*}"
+	local AUR_DATA="${*}"
 	declare -a PACKAGES_NOT_FOUND
 
 	case "${OUTPUT}" in
