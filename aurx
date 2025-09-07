@@ -17,16 +17,16 @@
 
 
 # Metadata.
-INTERNAL_VERSION="1.0.3-3"
+INTERNAL_VERSION="1.0.4-1"
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion" "list" "suggest" "version")
-GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "-p" "--persistent-path" "-t" "--tmp-path" "-v" "--verbosity")
-INSTALL_OPTIONS=("-c" "--cleanup" "-C" "--clean-operation" "-d" "--download-only" "-x" "--comparison-criteria" "-g" "--git-opts" "-M" "--makepkg-opts" "-V" "-W" "--overwrite-existing" "-w" "-s" "--source-path" "--verify-versions" "--wipe-existing")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "--persistent-path" "--tmp-path" "--verbosity")
+INSTALL_OPTIONS=("--cleanup" "--clean-operation" "-x" "--comparison-criteria" "-d" "--download-only" "-G" "--git-opts" "-M" "--makepkg-opts" "--overwrite-existing" "--source-path" "-V" "--verify-versions" "--wipe-existing")
 REMOVE_OPTIONS=("-R" "--remove-opts")
-UPDATE_OPTIONS=("-B" "--block-overwrite" "-x" "--comparison-criteria" "-k" "--keep-sources" "-K" "--keep-failed-sources" "-l" "--curl-opts" "-M" "--makepkg-opts")
-SEARCH_OPTIONS=("-l" "--curl-opts" "-m" "--maintained" "-O" "--no-out-of-date" "-i" "--no-mark-installed" "-u" "--no-mark-update" "-P" "--parallel" "-r" "--search-results" "-S" "--search-criteria" "-b" "--sort-by" "-o" "--order-by" "-z" "--output")
-SUGGEST_OPTIONS=("-l" "--curl-opts" "-r" "--search-results" "-o" "--order-by" "-z" "--output")
+UPDATE_OPTIONS=("--block-overwrite" "-x" "--comparison-criteria" "-C" "--curl-opts" "--keep-sources" "--keep-failed-sources" "-M" "--makepkg-opts")
+SEARCH_OPTIONS=("-C" "--curl-opts" "--maintained" "--no-out-of-date" "--no-mark-installed" "--no-mark-update" "-p" "--parallel" "--search-results" "--search-criteria" "--sort-by" "--order-by" "-o" "--output")
+SUGGEST_OPTIONS=("-C" "--curl-opts" "--search-results" "--order-by" "-o" "--output")
 COMPLETION_OPTIONS=("-e" "--executable-name")
-LIST_OPTIONS=("-u" "--no-mark-update" "-P" "--parallel" "-i" "--no-mark-installed")
+LIST_OPTIONS=("--no-mark-update" "-p" "--parallel" "--no-mark-installed")
 AVAILABLE_COMPLETIONS=("bash")
 COMPARISON_CRITERIA_VALUES=("rpc" "pkgbuild")
 OUTPUT_VALUES=("formatted" "json" "json-lines")
@@ -120,76 +120,76 @@ usage() {
 		
 		Options:
 		  general:
-		  -a, --all                             add all installed packages to the operation.
-		  -f, --force                           forces the operation, where appliable.
-		  -h, --help                            display this information and exit.
-		  -p, --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
-		  -t, --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp/aurx")
-		  -v, --verbosity [LEVEL]               level of verbosity. (2)
-		                                        0 - none, 1 - stderr, 2 - all.
+		  -a --all                             add all installed packages to the operation.
+		  -f --force                           forces the operation, where appliable.
+		  -h --help                            display this information and exit.
+		     --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
+		  -t --tmp-path [PATH]                 temp filesystem for various operations. ("/tmp/aurx")
+		     --verbosity [LEVEL]               level of verbosity. (2)
+		                                       0 - none, 1 - stderr, 2 - all.
 		
 		  install:
-		  -c, --cleanup                         delete sources after successful installs.
-		  -C, --clean-operation                 delete sources after unsucessful installs.
-		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
-		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
-		  -d, --download-only                   download the source from AUR and stop.
-		  -g, --git-opts [OPTS]..               opts to give in to git operations. ("")
-		  -M, --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
-		  -W, --overwrite-existing              overwrite eventually existing sources.
-		  -s, --source-path [PATH]              work directory for builds.("\${HOME}/.aurx/src")
-		  -V, --verify-versions                 compare target versions to installed ones.
-		  -w, --wipe-existing                   wipe eventually existing sources.
+		     --cleanup                         delete sources after successful installs.
+		     --clean-operation                 delete sources after unsucessful installs.
+		  -x --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
+		                                       "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+		  -d --download-only                   download the source from AUR and stop.
+		  -G --git-opts [OPTS]..               opts to give in to git operations. ("")
+		  -M --makepkg-opts [OPTS]..           opts to give in to makepkg installs. ("-sirc")
+		     --overwrite-existing              overwrite eventually existing sources.
+		     --source-path [PATH]              work directory for builds.("\${HOME}/.aurx/src")
+		  -V --verify-versions                 compare target versions to installed ones.
+		     --wipe-existing                   wipe eventually existing sources.
 
 		  remove:
-		  -R, --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
+		  -R --remove-opts [OPTS]..            opts to give in to pacman for removing package. ("-R")
 
 		  search:
-		  -l, --curl-opts                       opts to give in to curl.
-		                                        timeouts can be overwritten with this.
-		  -m, --maintained                      filter out unmaintained packages.
-		  -i, --no-mark-installed               don't show the '[installed]' mark.
-		  -u, --no-mark-update                  do not check for updates while searching.
-		  -O, --no-out-of-date                  filter out all out of date packages.
-		  -o, --order-by [ORDER]                how to order search results. ("descending")
-		                                        "ascending", "descending".
-		  -z, --output [TYPE]                   how to output search results. ("formatted")
-		                                        "formatted", "json", "json-lines".
-		  -P, --parallel [COUNT]                how many requests to do simultaneously. (50)
-		  -r, --search-results [COUNT]          number of results to display from search queries. (20)
-		  -S, --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
-		                                        "name", "name-desc", "depends", "checkdepends",
-		                                        "optdepends", "makedepends", "maintainer",
-		                                        "submitter", "provides", "conflicts", "replaces",
-		                                        "keywords", "groups", "comaintainers".
-		  -b, --sort-by [KEY]                   key to sort results by. ("popularity")
-		                                        "popularity", "firstsubmitted", "lastmodified",
-		                                        "votes", "popularity".
+		  -C --curl-opts                       opts to give in to curl.
+		                                       timeouts can be overwritten with this.
+		     --maintained                      filter out unmaintained packages.
+		     --no-mark-installed               don't show the '[installed]' mark.
+		     --no-mark-update                  do not check for updates while searching.
+		     --no-out-of-date                  filter out all out of date packages.
+		     --order-by [ORDER]                how to order search results. ("descending")
+		                                       "ascending", "descending".
+		  -o --output [TYPE]                   how to output search results. ("formatted")
+		                                       "formatted", "json", "json-lines".
+		  -p --parallel [COUNT]                how many requests to do simultaneously. (50)
+		     --search-results [COUNT]          number of results to display from search queries. (20)
+		     --search-criteria [CRITERIA]      criteria to use in search queries. ("name")
+		                                       "name", "name-desc", "depends", "checkdepends",
+		                                       "optdepends", "makedepends", "maintainer",
+		                                       "submitter", "provides", "conflicts", "replaces",
+		                                       "keywords", "groups", "comaintainers".
+		     --sort-by [KEY]                   key to sort results by. ("popularity")
+		                                       "popularity", "firstsubmitted", "lastmodified",
+		                                       "votes", "popularity".
 
 		  suggest:
-		  -l, --curl-opts                       opts to give in to curl.
-		                                        timeouts can be overwritten with this.
-		  -o, --order-by [ORDER]                how to order search results. ("descending")
-		                                        "ascending", "descending".
-		  -r, --search-results [COUNT]          number of results to suggest, max 20. (20)
-		  -z, --output [TYPE]                   how to output suggest results. ("formatted")
-		                                        "formatted", "json-lines".
+		  -C --curl-opts                       opts to give in to curl.
+		                                       timeouts can be overwritten with this.
+		     --order-by [ORDER]                how to order search results. ("descending")
+		                                       "ascending", "descending".
+		     --search-results [COUNT]          number of results to suggest, max 20. (20)
+		  -o --output [TYPE]                   how to output suggest results. ("formatted")
+		                                       "formatted", "json-lines".
 		
 		  update:
-		  -B, --block-overwrite                 don't overwrite existing sources.
-		  -x, --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
-		                                        "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
-		  -k, --keep-sources                    don't cleanup after successful updates.
-		  -K, --keep-failed-sources             don't cleanup after unsuccessful updates.
-		  -M, --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
+		     --block-overwrite                 don't overwrite existing sources.
+		  -x --comparison-criteria [CRITERIA]  criteria to use when comparing packages. ("rpc")
+		                                       "rpc" - AUR HTTP RPC API, "makepkg" - filesystem.
+		     --keep-sources                    don't cleanup after successful updates.
+		     --keep-failed-sources             don't cleanup after unsuccessful updates.
+		  -M --makepkg-opts [OPTS]             opts to give in to makepkg installs. ("-sirc")
 
 		  list:
-		  -i, --no-mark-installed               don't show the '[installed]' mark.
-		  -u, --no-mark-update                  do not check for updates while searching.
-		  -P, --parallel [COUNT]                how many requests to do simultaneously. (10)
+		     --no-mark-installed               don't show the '[installed]' mark.
+		     --no-mark-update                  do not check for updates while searching.
+		  -p --parallel [COUNT]                how many requests to do simultaneously. (10)
 
 		  completion:
-		  -e, --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
+		  -e --executable-name [NAME]          the name of the executable to be used for completion. ("aurx")
 		
 		Environment variables:
 		  Capitalized long option names with AURX_ prefix, for example: AURX_SEARCH_CRITERIA.
@@ -919,8 +919,8 @@ LONGOPTS=''
 LONGOPTS+='all,block-overwrite,cleanup,clean-operation,download-only,force,help,keep-sources,keep-failed-sources,maintained,no-mark-installed,no-mark-update,no-out-of-date,overwrite-existing,verify-versions,wipe-existing'
 LONGOPTS+=',comparison-criteria:,curl-opts:,executable-name:,git-opts:,makepkg-opts:,output:,order-by:,parallel:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,tmp-path:,verbosity:'
 OPTIONS=''
-OPTIONS+='aBcCdfhkKmiOuVwW'
-OPTIONS+='b:e:g:l:M:o:p:P:r:R:s:S:t:v:x:z:'
+OPTIONS+='adfhV'
+OPTIONS+='e:G:C:M:o:p:R:x:'
 if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 	print_error 51
 	exit 51
@@ -934,23 +934,23 @@ while true; do
 			ALL=true
 			shift
 			;;
-		-b|--sort-by )
-			SORT_BY="${2}"
-			shift 2
-			;;
-		-B|--block-overwrite )
+		--block-overwrite )
 			BLOCK_OVERWRITE=true
 			shift
 			;;
-		-c|--cleanup )
+		--cleanup )
 			CLEANUP=true
 			shift
 			;;
-		-C|--clean-operation )
+		--clean-operation )
 			CLEAN_OPERATION=true
 			shift
 			;;
-		-l|--curl-opts )
+		-x|--comparison-criteria )
+			COMPARISON_CRITERIA="${2}"
+			shift 2
+			;;
+		-C|--curl-opts )
 			CURL_OPTS=()
 			for OPT in ${2}; do
 				CURL_OPTS+=("${OPT}")
@@ -969,7 +969,7 @@ while true; do
 			FORCE=true
 			shift
 			;;
-		-g|--git-opts )
+		-G|--git-opts )
 			GIT_OPTS=()
 			for OPT in ${2}; do
 				GIT_OPTS+=("${OPT}")
@@ -980,15 +980,15 @@ while true; do
 			usage
 			exit 0
 			;;
-		-k|--keep-sources )
+		--keep-sources )
 			KEEP_SOURCES=true
 			shift
 			;;
-		-K|--keep-failed-sources )
+		--keep-failed-sources )
 			KEEP_FAILED_SOURCES=true
 			shift
 			;;
-		-m|--maintained )
+		--maintained )
 			MAINTAINED=true
 			shift
 			;;
@@ -999,36 +999,36 @@ while true; do
 			done
 			shift 2
 			;;
-		-u|--no-mark-update )
+		--no-mark-update )
 			NO_MARK_UPDATE=true
 			shift
 			;;
-		-i|--no-mark-installed )
+		--no-mark-installed )
 			NO_MARK_INSTALLED=true
 			shift
 			;;
-		-O|--no-out-of-date )
+		--no-out-of-date )
 			NO_OUT_OF_DATE=true
 			shift
 			;;
-		-z|--output )
+		-o|--output )
 			OUTPUT="${2}"
 			shift 2
 			;;
-		-o|--order-by )
+		--overwrite-existing )
+			OVERWRITE_EXISTING=true
+			shift
+			;;
+		--order-by )
 			ORDER_BY="${2}"
 			shift 2
 			;;
-		-p|--persistent-path )
+		--persistent-path )
 			PERSISTENT_PATH="${2}"
 			shift 2
 			;;
-		-P|--parallel )
+		-p|--parallel )
 			PARALLEL="${2}"
-			shift 2
-			;;
-		-r|--search-results )
-			SEARCH_RESULTS="${2}"
 			shift 2
 			;;
 		-R|--remove-opts )
@@ -1038,11 +1038,19 @@ while true; do
 			done
 			shift 2
 			;;
-		-s|--source-path )
+		--search-results )
+			SEARCH_RESULTS="${2}"
+			shift 2
+			;;
+		--sort-by )
+			SORT_BY="${2}"
+			shift 2
+			;;
+		--source-path )
 			SOURCE_PATH="${2}"
 			shift 2
 			;;
-		-S|--search-criteria )
+		--search-criteria )
 			SEARCH_CRITERIA="${2}"
 			shift 2
 			;;
@@ -1050,7 +1058,7 @@ while true; do
 			TMP_PATH="${2}"
 			shift 2
 			;;
-		-v|--verbosity )
+		--verbosity )
 			VERBOSITY="${2}"
 			shift 2
 			;;
@@ -1058,17 +1066,9 @@ while true; do
 			VERIFY_VERSIONS=true
 			shift
 			;;
-		-w|--wipe-existing )
+		--wipe-existing )
 			WIPE_EXISTING=true
 			shift
-			;;
-		-W|--overwrite-existing )
-			OVERWRITE_EXISTING=true
-			shift
-			;;
-		-x|--comparison-criteria )
-			COMPARISON_CRITERIA="${2}"
-			shift 2
 			;;
 		-- )
 			shift
