@@ -8,7 +8,13 @@ A simple bash script for easily managing AUR installs.
 ```
 git clone https://github.com/mvtab/aurx
 cd aurx/
+
+# install from AUR (normally identical with upstream)
 ./aurx install aurx
+
+# install from local copy
+# makepkg -sirc
+
 source <(aurx completion bash)
 
 aurx --help
