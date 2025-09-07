@@ -1,10 +1,14 @@
 # Changelog
 
 ## 2025-09-07 1.0.4
+- [Refactored script infrastructure: packed all code in functions, based defaults assignment to json dict.](https://github.com/mvtab/aurx/commit/ad9cef9695b30c59576a1af06c6469ce1675ab86)
+- [Added changelog.](https://github.com/mvtab/aurx/commit/2046024527749faaf70366c7e63d17a523073d26)
+- [Added curl-opts opt.](https://github.com/mvtab/aurx/commit/81700eee6fde0538b2119d1e29703431172dc56c)
+- [Added git-opts opt.](https://github.com/mvtab/aurx/commit/5d117bbddc78c1768c700704eb13d9a1d0c6a788)
 
 ### Breaking changes
 
-- Refactored short options: removed some redundant ones and renamed some to be more intuitive.
+- [Refactored short options: removed some redundant ones and renamed some to be more intuitive.](https://github.com/mvtab/aurx/commit/3c5f18d54f866687ec18434226b21cf526836962)
 
 Full changes:
 
