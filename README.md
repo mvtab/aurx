@@ -34,11 +34,11 @@ operation  | description
 :--------- | :----------
 install    | install any package from AUR or the working directory.
 remove     | Remove packages from system and the package list.
-update     | force install any package from AUR and delete source after.
+update     | pseudofunction - install any package from AUR using temp dir as work dir.
 search     | query the AUR database via the HTTP RPC API.
 suggest    | completion results via the AUR HTTP RPC API.
 completion | generate completion for the specified shell.
-list       | search for all locally installed AUR packages.
+list       | pseudofunction - search for all locally installed AUR packages.
 version    | display current version and exit.
 
 ## Configuration
