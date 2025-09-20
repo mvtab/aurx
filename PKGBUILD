@@ -8,7 +8,7 @@ url="https://github.com/mvtab/aurx"
 license=("GPL-3.0-only")
 depends=("curl>=7.68.0" "git" "jq")
 source=("aurx")
-sha256sums=("d22f617d3ad9f5f307d9a4afe2ba8715368e77bc7baa4cb5e5d020eefd21e1af")
+sha256sums=("de95b4d80ebf25461d9cc2005dc71ad7ae7019f87859913f2a8657b22d3fe6d9")
 
 package() {
 	install -Dm755 "${srcdir}/aurx" "${pkgdir}/usr/bin/aurx"

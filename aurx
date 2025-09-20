@@ -1200,8 +1200,8 @@ execute_script() {
 	load_piped_packages
 	launch_sanity_checks
 	launch_system_checks
-	apply_all_opt
 	process_pseudofunctions
+	apply_all_opt
 	[[ -z "${TARGET_PACKAGES[*]}" ]] && print_error 56 && exit 56
 	launch_execution
 }
