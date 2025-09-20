@@ -1130,10 +1130,6 @@ launch_aurx_early_execution() {
 			CURRENT_OPERATION="search"
 			SEARCH_CRITERIA="provides"
 			;;
-		version )
-			echo "${INTERNAL_VERSION}"
-			exit 0
-			;;
 		* )
 			;;
 	esac
@@ -1183,6 +1179,10 @@ launch_aurx_execution() {
 				print_error 62
 				exit 62
 			fi
+			;;
+		version )
+			echo "${INTERNAL_VERSION}"
+			exit 0
 			;;
 		* )
 			print_error 71
