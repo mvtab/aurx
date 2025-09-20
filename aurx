@@ -561,7 +561,7 @@ load_explicit_opts() {
 	LONGOPTS+=',comparison-criteria:,curl-opts:,executable-name:,git-opts:,makepkg-opts:,output:,order-by:,parallel:,persistent-path:,remove-opts:,search-criteria:,search-results:,sort-by:,source-path:,tmp-path:,verbosity:'
 	OPTIONS=''
 	OPTIONS+='adfhV'
-	OPTIONS+='e:G:C:M:o:p:R:x:'
+	OPTIONS+='e:G:C:M:o:p:R:t:x:'
 	if ! PARSED_OPTIONS=$(getopt --options="${OPTIONS}" --longoptions="${LONGOPTS}" --name "${0}" -- "${@}"); then
 		print_error 51
 		exit 51
