@@ -1217,7 +1217,7 @@ INTERNAL_VARIABLES=("ALL" "BLOCK_OVERWRITE" "CLEAN_OPERATION" "CLEANUP" "COMPARI
 	"VERBOSITY" "VERIFY_VERSIONS" "WIPE_EXISTING")
 INTERNAL_ARRAYS=("CURL_OPTS" "GIT_OPTS" "MAKEPKG_OPTS" "REMOVE_OPTS")
 POSSIBLE_OPERATIONS=("install" "remove" "update" "search" "completion" "list" "suggest" "version")
-GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "--persistent-path" "--tmp-path" "--verbosity")
+GENERAL_OPTIONS=("-a" "--all" "-f" "--force" "-h" "--help" "--persistent-path" "-t" "--tmp-path" "--verbosity")
 INSTALL_OPTIONS=("--cleanup" "--clean-operation" "-x" "--comparison-criteria" "-d" "--download-only" "-G" \
 	"--git-opts" "-M" "--makepkg-opts" "--overwrite-existing" "--source-path" "-V" "--verify-versions" "--wipe-existing")
 REMOVE_OPTIONS=("-R" "--remove-opts")
