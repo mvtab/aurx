@@ -1108,7 +1108,7 @@ suggest_aur_package() {
 
 # Tier 3 functions.
 
-launch_aurx_early_execution() {
+aurx_process_pseudofunctions() {
 	case "${CURRENT_OPERATION}" in
 		update )
 			SOURCE_PATH="${TMP_PATH?TMP_PATH not defined.}"
@@ -1198,13 +1198,9 @@ execute_aurx_script() {
 	load_aurx_piped_packages
 	launch_aurx_sanity_checks
 	launch_aurx_system_checks
-	launch_aurx_early_execution
 	apply_aurx_all_opt
-	# No packages and all left operations need them.
-	if [[ -z "${TARGET_PACKAGES[*]}" ]]; then
-		print_error 56
-		exit 56
-	fi
+	aurx_process_pseudofunctions
+	[[ -z "${TARGET_PACKAGES[*]}" ]] && print_error 56 && exit 56
 	launch_aurx_execution
 }
 
