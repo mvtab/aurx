@@ -359,7 +359,7 @@ aurx_completion() {
 	esac
 }
 
-launch_aurx_sanity_checks() {
+launch_sanity_checks() {
 	if [[ ! "${POSSIBLE_OPERATIONS[*]}" =~ ${CURRENT_OPERATION} ]]; then
 		print_error 55
 		exit 55
@@ -442,7 +442,7 @@ launch_aurx_sanity_checks() {
 	esac
 }
 
-launch_aurx_system_checks() {
+launch_system_checks() {
 	case "${CURRENT_OPERATION}" in
 		install | update )
 			REQUIRED_PACKAGES=('curl' 'echo' 'git' 'grep' 'jq' 'pacman' 'sed' 'tee')
@@ -490,7 +490,7 @@ launch_aurx_system_checks() {
 	done
 }
 
-apply_aurx_all_opt() {
+apply_all_opt() {
 	if ${ALL}; then
 		while IFS= read -r TARGET_PACKAGE; do
 			if [[ -n "${TARGET_PACKAGE}" ]]; then
@@ -500,7 +500,7 @@ apply_aurx_all_opt() {
 	fi
 }
 
-load_aurx_config() {
+load_config() {
 	CONFIG_JSON_STRING="${*}"
 	for CFG_ENV_VAR in $(echo "${CONFIG_JSON_STRING}" | jq -cr 'to_entries | .[]'); do
 		CFG_VAR=$(echo "${CFG_ENV_VAR}" | jq -cr '.key')
@@ -530,7 +530,7 @@ load_aurx_config() {
 	done
 }
 
-load_aurx_env_vars() {
+load_env_vars() {
 	for INTERNAL_VARIABLE in "${INTERNAL_VARIABLES[@]}"; do
 		TEST_EVALUATION=$(eval "echo \${AURX_${INTERNAL_VARIABLE}}")
 		if [[ -n "${TEST_EVALUATION}" ]]; then
@@ -549,7 +549,7 @@ load_aurx_env_vars() {
 	done
 }
 
-load_aurx_explicit_opts() {
+load_explicit_opts() {
 	getopt --test 1> /dev/null && true
 	if [[ ${?} -ne 4 ]]; then
 		print_error 50
@@ -734,7 +734,7 @@ load_aurx_explicit_opts() {
 	TARGET_PACKAGES=("${@}")
 }
 
-load_aurx_piped_packages() {
+load_piped_packages() {
 	if ! [[ -t 0 ]]; then
 		while read -r STDIN_OPT; do
 			TARGET_PACKAGES+=("${STDIN_OPT}")
@@ -1108,7 +1108,7 @@ suggest_aur_package() {
 
 # Tier 3 functions.
 
-aurx_process_pseudofunctions() {
+process_pseudofunctions() {
 	case "${CURRENT_OPERATION}" in
 		update )
 			SOURCE_PATH="${TMP_PATH?TMP_PATH not defined.}"
@@ -1135,7 +1135,7 @@ aurx_process_pseudofunctions() {
 	esac
 }
 
-launch_aurx_execution() {
+launch_execution() {
 	case "${CURRENT_OPERATION}" in
 		install|remove|suggest )
 			for SELECTED_PACKAGE in "${TARGET_PACKAGES[@]}"; do
@@ -1191,17 +1191,19 @@ launch_aurx_execution() {
 	esac
 }
 
-execute_aurx_script() {
-	load_aurx_config "$(generate_config_json)"
-	load_aurx_env_vars
-	load_aurx_explicit_opts "${@}"
-	load_aurx_piped_packages
-	launch_aurx_sanity_checks
-	launch_aurx_system_checks
-	apply_aurx_all_opt
-	aurx_process_pseudofunctions
+# Tier 4 functions.
+
+execute_script() {
+	load_config "$(generate_config_json)"
+	load_env_vars
+	load_explicit_opts "${@}"
+	load_piped_packages
+	launch_sanity_checks
+	launch_system_checks
+	apply_all_opt
+	process_pseudofunctions
 	[[ -z "${TARGET_PACKAGES[*]}" ]] && print_error 56 && exit 56
-	launch_aurx_execution
+	launch_execution
 }
 
 # Metadata.
@@ -1238,4 +1240,4 @@ declare "${INTERNAL_VARIABLES[@]}"
 declare -a "${INTERNAL_ARRAYS[@]}"
 
 # Run.
-execute_aurx_script "${@}"
+execute_script "${@}"
