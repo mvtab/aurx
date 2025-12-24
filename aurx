@@ -41,7 +41,7 @@ usage() {
 		  -c --config [JSON_STRING]            JSON configuration for aurx.
 		                                       same options as explicit, but capitalized and with
 		                                       underscores instead of hyphens, e.g. TMP_PATH.
-		                                       It the highest priority and beautified JSON works too.
+		                                       It has the highest priority and beautified JSON works too.
 		  -f --force                           forces the operation, where appliable.
 		  -h --help                            display this information and exit.
 		     --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
