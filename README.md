@@ -42,11 +42,21 @@ list       | pseudofunction - search for all locally installed AUR packages.
 
 ## Configuration
 
+### Priority
+1. JSON options given to `--config`
+2. Explicit options
+3. Environment variables
+4. Default config
+
 ### Environment variables
 Capitalized long option names with `AURX_` prefix. For example for `--tmp-path`: `AURX_TMP_PATH`.  
 
-### Values
+### Explicit options values
 A comprehensive list of the possible configurations can be found with `aurx --help` or by using the bash completion.  
+
+### Example JSON configuration
+A complete example JSON configuration can be found inside the script under the function `generate_config_json`.  
+Partial loading works too: you don't have to give all the options, the JSON dict will be parsed and any given opts will be taken in. (See examples)
 
 ## Considerations
 
@@ -119,3 +129,36 @@ aurx search some-maintainer --search-criteria maintainer --sort-by firstsubmitte
 source <(/specific/path/aurx completion bash --executable-name /specific/path/aurx)
 ```
 
+### JSON config
+
+##### Configure search operation through config
+```bash
+aurx search some-package --config '{"SEARCH_RESULTS": 5, "MAINTAINED": true, "NO_OUT_OF_DATE": true}'
+```
+
+##### Overwrite maybe automatically given option through config
+This will return 2 search results.
+```bash
+aurx search some-package --search-results 1 --config '{"SEARCH_RESULTS": 2}'
+```
+
+##### Load config from a beautified JSON file
+
+You can have a file containing the configs, for example:
+
+```json
+{
+    "COMPARISON_CRITERIA": "pkgbuild",
+    "EXECUTABLE_NAME": "/weird/path/aurx",
+    "SEARCH_RESULTS": 5,
+    "SOURCE_PATH": "/opt/src",
+    "SORT_BY": "votes",
+    "VERIFY_VERSIONS": true
+}
+```
+
+And then load it so:
+
+```bash
+aurx --config "$(cat /path/to/json)" ..
+```
