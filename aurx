@@ -39,6 +39,9 @@ usage() {
 		  general:
 		  -a --all                             add all installed packages to the operation.
 		  -c --config [JSON_STRING]            JSON configuration for aurx.
+		                                       same options as explicit, but capitalized and with
+		                                       underscores instead of hyphens, e.g. TMP_PATH.
+		                                       It the highest priority and beautified JSON works too.
 		  -f --force                           forces the operation, where appliable.
 		  -h --help                            display this information and exit.
 		     --persistent-path [PATH]          path for persistent data. ("\${HOME}/.aurx/cfg")
@@ -1245,7 +1248,7 @@ METADATA_ARRAYS=("INTERNAL_VARIABLES" "INTERNAL_ARRAYS" "POSSIBLE_OPERATIONS" "G
 declare "${METADATA_VARIABLES[@]}"
 declare -a "${METADATA_ARRAYS[@]}"
 
-INTERNAL_VERSION="1.0.6-3"
+INTERNAL_VERSION="1.0.6-4"
 INTERNAL_VARIABLES=("ALL" "BLOCK_OVERWRITE" "CLEAN_OPERATION" "CLEANUP" "COMPARISON_CRITERIA" \
 	"DOWNLOAD_ONLY" "EXECUTABLE_NAME" "FORCE" "GIVEN_CONFIG_STRING" "KEEP_FAILED_SOURCES" "KEEP_SOURCES" \
 	"MAINTAINED" "NO_MARK_INSTALLED" "NO_MARK_UPDATE" "NO_OUT_OF_DATE" "ORDER_BY" "OUTPUT" "OVERWRITE_EXISTING" \

@@ -42,7 +42,7 @@ list       | pseudofunction - search for all locally installed AUR packages.
 
 ## Configuration
 
-### Priority
+### Loading priority (highest overwrites the lower)
 1. JSON options given to `--config`
 2. Explicit options
 3. Environment variables
@@ -68,11 +68,13 @@ Package completions are using the AUR HTTP RPC API, which has a daily rate limit
 ### Install
 
 #### Install a new package from AUR or an existing source from the work directory.
+
 ```bash
 aurx install some-package
 ```
 
 #### Download a package to modify before install.
+
 ```bash
 aurx install some-package --download-only --source-path /tmp
 cd /tmp/some-package
@@ -84,6 +86,7 @@ aurx install some-package --source-path /tmp
 ### Remove
 
 #### Remove a package with custom pacman remove flags.
+
 ```bash
 aurx remove some-package --remove-opts '-Rsncu'
 ```
@@ -91,16 +94,19 @@ aurx remove some-package --remove-opts '-Rsncu'
 ### Update
 
 #### Update a package only if the present source's version is higher than the installed one.
+
 ```bash
 aurx install some-package --verify-versions --comparison-criteria pkgbuild
 ```
 
 #### Update a package to the latest version available online and delete source after.
+
 ```bash
 aurx update some-package
 ```
 
 ##### Try to update all installed packages.
+
 ```bash
 aurx update --all
 ```
@@ -108,16 +114,19 @@ aurx update --all
 ### Search
 
 ##### List all installed packages and mark available updates.
+
 ```bash
 aurx list
 ```
 
 ##### Query the AUR looking for only up to date and maintainted packages, sorting results by votes.
+
 ```bash
 aurx search some-package --no-out-of-date --maintained --sort-by votes
 ```
 
 ##### Search for packages from a maintainer and return results in JSON format.
+
 ```bash
 aurx search some-maintainer --search-criteria maintainer --sort-by firstsubmitted --order-by ascending --search-results 10 --output json
 ```
@@ -125,6 +134,7 @@ aurx search some-maintainer --search-criteria maintainer --sort-by firstsubmitte
 ### Completion
 
 ##### Get bash completion for custom executable name (where `aurx` is not correct).
+
 ```bash
 source <(/specific/path/aurx completion bash --executable-name /specific/path/aurx)
 ```
@@ -132,12 +142,15 @@ source <(/specific/path/aurx completion bash --executable-name /specific/path/au
 ### JSON config
 
 ##### Configure search operation through config
+
 ```bash
 aurx search some-package --config '{"SEARCH_RESULTS": 5, "MAINTAINED": true, "NO_OUT_OF_DATE": true}'
 ```
 
 ##### Overwrite maybe automatically given option through config
+
 This will return 2 search results.
+
 ```bash
 aurx search some-package --search-results 1 --config '{"SEARCH_RESULTS": 2}'
 ```

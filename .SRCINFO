@@ -1,7 +1,7 @@
 pkgbase = aurx
 	pkgdesc = A simple bash script for easily managing AUR installs.
 	pkgver = 1.0.6
-	pkgrel = 3
+	pkgrel = 4
 	url = https://github.com/mvtab/aurx
 	arch = x86_64
 	license = GPL-3.0-only
@@ -9,6 +9,6 @@ pkgbase = aurx
 	depends = git
 	depends = jq
 	source = aurx
-	sha256sums = 811144ff6f413903f555c428db5f5c347acf60b1c6d2d927bcfe33f2fdebbd3e
+	sha256sums = c35e8a748816e6beb3e7ca1b3aac52235506929a5132bc06011c29cee355b210
 
 pkgname = aurx
