@@ -326,7 +326,7 @@ aurx_completion() {
 		bash )
 			cat <<- EOS
 				_aurx_completion() {
-					local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
+				        local CURRENT_WORD="\${COMP_WORDS[COMP_CWORD]}"
 				        local LAST_WORD="\${COMP_WORDS[COMP_CWORD-1]}"
 				        COMPREPLY=()
 				        local POSSIBLE_OPERATIONS="${POSSIBLE_OPERATIONS[*]}"
@@ -388,7 +388,7 @@ aurx_completion() {
 				                COMPREPLY=( \$(compgen -d -- "\${CURRENT_WORD}") )
 				        elif [[ -z \$(echo \${COMP_WORDS[*]} \${POSSIBLE_OPERATIONS[*]} | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\${POSSIBLE_OPERATIONS}" -- "\${CURRENT_WORD}") )
-				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search " | tr " " "\n" | sort | uniq -D) ]]; then
+				        elif [[ \${#CURRENT_WORD} -ge 3 ]] && [[ ! -z \$(echo \${COMP_WORDS[*]} " install search describe " | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\$(${EXECUTABLE_NAME} suggest \${CURRENT_WORD} | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
 				        elif [[ ! -z \$(echo \${COMP_WORDS[*]} " remove update " | tr " " "\n" | sort | uniq -D) ]]; then
 				                COMPREPLY=( \$(compgen -W "\$(cat ${PERSISTENT_PATH}/package_list | tr '\n' ' ')" -- "\${CURRENT_WORD}") )
@@ -1346,7 +1346,7 @@ METADATA_ARRAYS=("INTERNAL_VARIABLES" "INTERNAL_ARRAYS" "POSSIBLE_OPERATIONS" "G
 declare "${METADATA_VARIABLES[@]}"
 declare -a "${METADATA_ARRAYS[@]}"
 
-INTERNAL_VERSION="1.0.8-6"
+INTERNAL_VERSION="1.0.9-1"
 INTERNAL_VARIABLES=("ALL" "BLOCK_OVERWRITE" "CLEAN_OPERATION" "CLEANUP" "COMPARISON_CRITERIA" "CONFIG" \
 	"DOWNLOAD_ONLY" "EXECUTABLE_NAME" "FORCE" "GIT_CONNECTION" "KEEP_FAILED_SOURCES" "KEEP_SOURCES" \
 	"MAINTAINED" "NO_MARK_INSTALLED" "NO_MARK_UPDATE" "NO_OUT_OF_DATE" "ORDER_BY" "OUTPUT" "OVERWRITE_EXISTING" \
